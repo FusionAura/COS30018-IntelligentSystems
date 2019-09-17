@@ -5,7 +5,7 @@ import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 
-public class MasterRoutingAgent extends Agent
+public class MasterRoutingAgent extends Agent implements Drawable
 {
     private int capacity;
 
@@ -39,5 +39,10 @@ public class MasterRoutingAgent extends Agent
             System.out.println(((AID)receivers.next()).getLocalName());
         }
         send(msg);
+    }
+
+    @Override
+    public void Draw() {
+        
     }
 }

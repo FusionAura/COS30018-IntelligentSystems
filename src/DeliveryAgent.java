@@ -2,7 +2,7 @@ import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.*;
 
-public class DeliveryAgent extends Agent
+public class DeliveryAgent extends Agent implements Drawable
 {
     protected void setup()
     {
@@ -22,5 +22,10 @@ public class DeliveryAgent extends Agent
                 }
             }
         });
+    }
+
+    @Override
+    public void Draw() {
+
     }
 }
