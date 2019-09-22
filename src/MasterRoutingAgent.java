@@ -8,6 +8,7 @@ import jade.lang.acl.ACLMessage;
 public class MasterRoutingAgent extends Agent implements Drawable
 {
     private int capacity;
+    private Position _position = new Position(0, 0);
 
     protected void setup()
     {

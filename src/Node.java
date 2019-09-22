@@ -1,5 +1,6 @@
 public class Node implements Drawable {
     private String _name;
+    private Position _position = new Position(0, 0);
 
     public Node(String name) {
         _name = name;
@@ -12,5 +13,13 @@ public class Node implements Drawable {
     @Override
     public void Draw() {
 
+    }
+
+    public double getX() {
+        return _position.getX();
+    }
+
+    public double getY() {
+        return _position.getY();
     }
 }
