@@ -16,32 +16,17 @@ public class MainController
         // Create and start an agent of class Counter Agent
         System.out.println(MainController.class.getName() + ": Starting up the Master Controller...");
 
-
-
-        AgentController DeliveryAgent= mainCtrl.createNewAgent("DeliveryAgent", DeliveryAgent.class.getName(), new Object[0]);
+        AgentController DeliveryAgent= mainCtrl.createNewAgent("d1", DeliveryAgent.class.getName(), new Object[0]);
         DeliveryAgent.start();
 
-        AgentController DeliveryAgent2= mainCtrl.createNewAgent("DeliveryAgent2", DeliveryAgent.class.getName(), new Object[0]);
+        AgentController DeliveryAgent2= mainCtrl.createNewAgent("d2", DeliveryAgent.class.getName(), new Object[0]);
         DeliveryAgent2.start();
 
-        AgentController DeliveryAgent3= mainCtrl.createNewAgent("DeliveryAgent3", DeliveryAgent.class.getName(), new Object[0]);
+        AgentController DeliveryAgent3= mainCtrl.createNewAgent("d3", DeliveryAgent.class.getName(), new Object[0]);
         DeliveryAgent3.start();
 
         AgentController agentCtrl= mainCtrl.createNewAgent("MasterRoutingAgent", MasterRoutingAgent.class.getName(), new Object[0]);
         agentCtrl.start();
 
-        /*try
-        {
-
-            System.out.println(MainController.class.getName() + ": Setup Master Agent");
-            MasterRoutingAgent o2a = agentCtrl.getO2AInterface(MasterRoutingAgent.class);
-            o2a.setup();// Wait for some time
-
-
-        }
-        catch (StaleProxyException e)
-        {
-            e.printStackTrace();
-        }*/
     }
 }
