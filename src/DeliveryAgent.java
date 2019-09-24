@@ -4,6 +4,7 @@ import jade.lang.acl.*;
 
 public class DeliveryAgent extends Agent implements Drawable
 {
+    private Position _position = new Position(0, 0);
     protected void setup()
     {
         addBehaviour(new CyclicBehaviour(this)
