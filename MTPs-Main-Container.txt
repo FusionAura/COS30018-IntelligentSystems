@@ -1,1 +1,1 @@
-http://192.168.20.8:7778/acc
+http://PC.gateway:7778/acc
