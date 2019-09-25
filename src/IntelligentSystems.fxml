@@ -67,7 +67,7 @@
             <Button layoutX="14.0" layoutY="283.0" mnemonicParsing="false" text="Delete Agent" />
             <Accordion layoutX="37.0" layoutY="64.0" />
             <Button layoutX="101.0" layoutY="14.0" mnemonicParsing="false" text="Run" />
-            <ListView layoutX="15.0" layoutY="39.0" prefHeight="200.0" prefWidth="86.0" />
+            <ListView fx:id="AgentsList" layoutX="15.0" layoutY="39.0" prefHeight="200.0" prefWidth="86.0" />
             <TreeView layoutX="101.0" layoutY="39.0" prefHeight="200.0" prefWidth="200.0" />
             <Text layoutX="15.0" layoutY="259.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Number of Active Agents:" />
             <Button layoutX="138.0" layoutY="14.0" mnemonicParsing="false" text="Pause" />
