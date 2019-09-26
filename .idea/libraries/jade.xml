@@ -2,13 +2,13 @@
   <library name="jade">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/jade.jar!/" />
-      <root url="file://C:/Program Files/Java/javafx-sdk-13/lib" />
+      <root url="jar://$PROJECT_DIR$/lib/com.google.ortools.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/protobuf.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="file://C:/Program Files/Java/javafx-sdk-13/lib" />
-    </SOURCES>
-    <jarDirectory url="file://C:/Program Files/Java/javafx-sdk-13/lib" recursive="false" />
-    <jarDirectory url="file://C:/Program Files/Java/javafx-sdk-13/lib" recursive="false" type="SOURCES" />
+    <NATIVE>
+      <root url="file://$PROJECT_DIR$/lib" />
+    </NATIVE>
+    <SOURCES />
   </library>
 </component>

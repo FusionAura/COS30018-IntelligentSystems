@@ -5,6 +5,7 @@ import java.util.List;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 
 public class MasterRoutingAgent extends Agent implements Drawable
@@ -43,6 +44,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
             System.out.println(((AID)receivers.next()).getLocalName());
         }
         send(msg);
+        addBehaviour(new VrpOneShot());
     }
 
     // Notify that a new node has been created and update the distance matrix
@@ -83,5 +85,18 @@ public class MasterRoutingAgent extends Agent implements Drawable
     @Override
     public void Draw() {
         
+    }
+
+    private class VrpOneShot extends OneShotBehaviour {
+        VrpOneShot() {
+            System.out.println(getBehaviourName() + ": I have been created");
+        }
+
+        @Override
+        public void action() {
+            System.out.println(getBehaviourName() + ": I will be executed only once");
+            ORToolsVRP test = new ORToolsVRP();
+            test.Calc();
+        }
     }
 }
