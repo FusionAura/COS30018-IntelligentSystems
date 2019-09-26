@@ -17,10 +17,6 @@ import javafx.scene.control.ListView;
 
 public class MainController extends Application
 {
-    //List View variables.
-    @FXML private ListView AgentsList;
-    @FXML private Button CreateButton;
-
     @Override
     public void start(Stage primaryStage) throws Exception
     {
