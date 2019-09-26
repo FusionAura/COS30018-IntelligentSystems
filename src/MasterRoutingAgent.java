@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +29,12 @@ public class MasterRoutingAgent extends Agent implements Drawable
             }
         };
         addBehaviour(msgListenBehaviour);
-
+        try {
+            SendRoutes();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        /*
         ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
         msg.setContent("Contacting agents...");
         for(int i=1;i<=3;i++)
@@ -43,6 +49,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
             System.out.println(((AID)receivers.next()).getLocalName());
         }
         send(msg);
+         */
     }
 
     // Notify that a new node has been created and update the distance matrix
@@ -83,5 +90,16 @@ public class MasterRoutingAgent extends Agent implements Drawable
     @Override
     public void Draw() {
         
+    }
+
+    public void SendRoutes() throws IOException {
+        List<Node> testRoute = new ArrayList<Node>();
+        testRoute.add(new Node("testNode"));
+        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+        MessageObject msgObject = new MessageObject();
+        msgObject.SetRoute(testRoute);
+        msg.setContentObject(msgObject);
+        msg.addReceiver(new AID("d1", AID.ISLOCALNAME));
+        send(msg);
     }
 }

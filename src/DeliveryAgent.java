@@ -1,6 +1,7 @@
 import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.*;
+import jade.tools.sniffer.Message;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +21,19 @@ public class DeliveryAgent extends Agent implements Drawable
                 ACLMessage msg = receive();
                 if(msg!=null)
                 {
+                    try {
+                        MessageObject msgObject = (MessageObject) msg.getContentObject();
+                        _route = msgObject.GetRoute();
+                    } catch (UnreadableException e) {
+                        e.printStackTrace();
+                    }
                     System.out.println(getLocalName()+" Received message "+msg.getContent()+" from "+msg.getSender().getLocalName());
                     ACLMessage reply = msg.createReply();
                     reply.setPerformative(ACLMessage.INFORM);
                     reply.setContent("Agent "+getLocalName()+" responding!");
                     System.out.println(getLocalName()+": Sending response "+reply.getContent()+" to "+msg.getAllReceiver().next());
                     send(reply);
+                    System.out.println(_route.get(0).getX());
                 }
             }
         });

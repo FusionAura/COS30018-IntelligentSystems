@@ -1,4 +1,6 @@
-public class Node implements Drawable {
+import java.io.Serializable;
+
+public class Node implements Drawable, Serializable {
     private String _name;
     private Position _position = new Position(0, 0);
 
