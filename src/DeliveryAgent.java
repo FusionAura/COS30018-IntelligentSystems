@@ -21,19 +21,20 @@ public class DeliveryAgent extends Agent implements Drawable
                 ACLMessage msg = receive();
                 if(msg!=null)
                 {
-                    try {
-                        MessageObject msgObject = (MessageObject) msg.getContentObject();
-                        _route = msgObject.GetRoute();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
+                    //Ontology check exists if we need to send different types of messages
+                    if(msg.getOntology().equals("Delivery-route-ontology"))
+                    {
+                        try {
+                            System.out.println("Delivery route message received!");
+                            MessageObject msgObject = (MessageObject) msg.getContentObject();
+                            _route = msgObject.GetRoute();
+                            System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getX());
+                            System.out.println("Delivery route successfully added!");
+                            //TODO -- Implement FollowRoute() here
+                        } catch (UnreadableException e) {
+                            e.printStackTrace();
+                        }
                     }
-                    System.out.println(getLocalName()+" Received message "+msg.getContent()+" from "+msg.getSender().getLocalName());
-                    ACLMessage reply = msg.createReply();
-                    reply.setPerformative(ACLMessage.INFORM);
-                    reply.setContent("Agent "+getLocalName()+" responding!");
-                    System.out.println(getLocalName()+": Sending response "+reply.getContent()+" to "+msg.getAllReceiver().next());
-                    send(reply);
-                    System.out.println(_route.get(0).getX());
                 }
             }
         });

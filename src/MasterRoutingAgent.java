@@ -10,7 +10,7 @@ import jade.lang.acl.ACLMessage;
 
 public class MasterRoutingAgent extends Agent implements Drawable
 {
-    private int capacity;
+    private int _capacity;
     private Position _position = new Position(0, 0);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
 
@@ -34,22 +34,6 @@ public class MasterRoutingAgent extends Agent implements Drawable
         } catch (IOException e) {
             e.printStackTrace();
         }
-        /*
-        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-        msg.setContent("Contacting agents...");
-        for(int i=1;i<=3;i++)
-        {
-            msg.addReceiver(new AID("d"+i, AID.ISLOCALNAME));
-        }
-
-        System.out.println(getLocalName()+": Sending message "+msg.getContent()+" to ");
-        Iterator receivers = msg.getAllIntendedReceiver();
-        while(receivers.hasNext())
-        {
-            System.out.println(((AID)receivers.next()).getLocalName());
-        }
-        send(msg);
-         */
     }
 
     // Notify that a new node has been created and update the distance matrix
@@ -93,13 +77,23 @@ public class MasterRoutingAgent extends Agent implements Drawable
     }
 
     public void SendRoutes() throws IOException {
+        //TODO -- Use JADE controller to get all delivery agent names
+        //TODO -- Iterate though each existing delivery agent to send route to
         List<Node> testRoute = new ArrayList<Node>();
         testRoute.add(new Node("testNode"));
-        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+
         MessageObject msgObject = new MessageObject();
         msgObject.SetRoute(testRoute);
+
+        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+        msg.setLanguage("English");
+
+        //TODO -- Define proper ontology
+        msg.setOntology("Delivery-route-ontology");
+
         msg.setContentObject(msgObject);
         msg.addReceiver(new AID("d1", AID.ISLOCALNAME));
+
         send(msg);
     }
 }
