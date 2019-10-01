@@ -2,8 +2,10 @@
   <library name="jade">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/jade.jar!/" />
+      <root url="file://$PATH_TO__FX$" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
+    <jarDirectory url="file://$PATH_TO__FX$" recursive="false" />
   </library>
 </component>
