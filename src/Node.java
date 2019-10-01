@@ -2,10 +2,11 @@ import java.io.Serializable;
 
 public class Node implements Drawable, Serializable {
     private String _name;
-    private Position _position = new Position(0, 0);
+    private Position _position;
 
-    public Node(String name) {
+    public Node(String name, Position position) {
         _name = name;
+        _position = position;
     }
 
     public boolean isAddress(String address) {

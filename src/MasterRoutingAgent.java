@@ -1,7 +1,9 @@
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -13,6 +15,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
     private int _capacity;
     private Position _position = new Position(0, 0);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
+    private List<Node> _allNodes = new ArrayList<Node>();
 
     protected void setup()
     {
@@ -37,12 +40,16 @@ public class MasterRoutingAgent extends Agent implements Drawable
     }
 
     // Notify that a new node has been created and update the distance matrix
-    public void NewNode(Node newNode, List<Node> allOtherNodes) {
+    public void NewNode(Node newNode) {
+        if (_allNodes.contains(newNode)) {
+            return;
+        }
+
         List<Double> distanceBetweenNodes = new ArrayList<>();
-        for (int i = 0; i < allOtherNodes.size(); i++) {
+        for (int i = 0; i < _allNodes.size(); i++) {
             // Calculate distance using trigonometry
-            double xDifference = _position.getX() - allOtherNodes.get(i).getX();
-            double yDifference = _position.getY() - allOtherNodes.get(i).getY();
+            double xDifference = newNode.getX() - _allNodes.get(i).getX();
+            double yDifference = newNode.getY() - _allNodes.get(i).getY();
 
             // a^2 + b^2 = c^2
             Double distance = Math.sqrt(Math.pow(xDifference, 2) + Math.pow(yDifference, 2));
@@ -55,6 +62,14 @@ public class MasterRoutingAgent extends Agent implements Drawable
         distanceBetweenNodes.add((double) 0);
 
         _distanceMatrix.add(distanceBetweenNodes);
+        _allNodes.add(newNode);
+    }
+
+    public void RemoveNode(Node node) {
+        int position = _allNodes.indexOf(node);
+        if (position >= 0) {
+            RemoveNode(position);
+        }
     }
 
     // Notify that a node has been removed and update the distance matrix
@@ -69,6 +84,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
         }
 
         _distanceMatrix.remove(position);
+        _allNodes.remove(position);
     }
 
     @Override
@@ -95,5 +111,29 @@ public class MasterRoutingAgent extends Agent implements Drawable
         msg.addReceiver(new AID("d1", AID.ISLOCALNAME));
 
         send(msg);
+    }
+    
+    //MEANT ONLY FOR TESTING DISTANCE MATRIX
+    public static void main(String[] args) {
+        MasterRoutingAgent masterRoutingAgent = new MasterRoutingAgent();
+        Random rand = new Random();
+        for (int i = 0; i < 10; i++) {
+            Node newNode = new Node("Node" + i, new Position(rand.nextInt(100), rand.nextInt(100)));
+            masterRoutingAgent.NewNode(newNode);
+        }
+
+        DecimalFormat myFormat = new DecimalFormat("##");
+
+        for (int i = 0; i < masterRoutingAgent.get_distanceMatrix().size(); i++) {
+            System.out.print("[");
+            for (int j = 0; j < masterRoutingAgent.get_distanceMatrix().get(i).size(); j++) {
+                System.out.print(myFormat.format(masterRoutingAgent.get_distanceMatrix().get(i).get(j)) + ", ");
+            }
+            System.out.println("]");
+        }
+    }
+
+    public List<List<Double>> get_distanceMatrix() {
+        return _distanceMatrix;
     }
 }
