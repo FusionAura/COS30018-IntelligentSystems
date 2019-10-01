@@ -22,7 +22,7 @@ public class DeliveryAgent extends Agent implements Drawable
                 if(msg!=null)
                 {
                     //Ontology check exists if we need to send different types of messages
-                    if(msg.getOntology().equals("Delivery-route-ontology"))
+                    if(msg.getOntology().equals(MasterRoutingAgent._ontology))
                     {
                         try {
                             System.out.println("Delivery route message received!");

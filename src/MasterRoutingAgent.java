@@ -16,6 +16,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
     private Position _position = new Position(0, 0);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
     private List<Node> _allNodes = new ArrayList<Node>();
+    public static final String _ontology = "Delivery-route-ontology";
 
     protected void setup()
     {
@@ -96,7 +97,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
         //TODO -- Use JADE controller to get all delivery agent names
         //TODO -- Iterate though each existing delivery agent to send route to
         List<Node> testRoute = new ArrayList<Node>();
-        testRoute.add(new Node("testNode"));
+        testRoute.add(new Node("testNode", new Position(0, 0)));
 
         MessageObject msgObject = new MessageObject();
         msgObject.SetRoute(testRoute);
@@ -105,7 +106,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
         msg.setLanguage("English");
 
         //TODO -- Define proper ontology
-        msg.setOntology("Delivery-route-ontology");
+        msg.setOntology(_ontology);
 
         msg.setContentObject(msgObject);
         msg.addReceiver(new AID("d1", AID.ISLOCALNAME));
