@@ -16,7 +16,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
     private Position _position = new Position(0, 0);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
     private List<Node> _allNodes = new ArrayList<Node>();
-    public static final String _ontology = "Delivery-route-ontology";
+    public static final String DELIVERY_ROUTE_ONTOLOGY = "Delivery-route-ontology";
 
     protected void setup()
     {
@@ -106,7 +106,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
         msg.setLanguage("English");
 
         //TODO -- Define proper ontology
-        msg.setOntology(_ontology);
+        msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
 
         msg.setContentObject(msgObject);
         msg.addReceiver(new AID("d1", AID.ISLOCALNAME));
