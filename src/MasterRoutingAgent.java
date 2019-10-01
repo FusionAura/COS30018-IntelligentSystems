@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,10 +12,11 @@ import jade.lang.acl.ACLMessage;
 
 public class MasterRoutingAgent extends Agent implements Drawable
 {
-    private int capacity;
+    private int _capacity;
     private Position _position = new Position(0, 0);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
     private List<Node> _allNodes = new ArrayList<Node>();
+    public static final String DELIVERY_ROUTE_ONTOLOGY = "Delivery-route-ontology";
 
     protected void setup()
     {
@@ -31,21 +33,11 @@ public class MasterRoutingAgent extends Agent implements Drawable
             }
         };
         addBehaviour(msgListenBehaviour);
-
-        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-        msg.setContent("Contacting agents...");
-        for(int i=1;i<=3;i++)
-        {
-            msg.addReceiver(new AID("d"+i, AID.ISLOCALNAME));
+        try {
+            SendRoutes();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        System.out.println(getLocalName()+": Sending message "+msg.getContent()+" to ");
-        Iterator receivers = msg.getAllIntendedReceiver();
-        while(receivers.hasNext())
-        {
-            System.out.println(((AID)receivers.next()).getLocalName());
-        }
-        send(msg);
     }
 
     // Notify that a new node has been created and update the distance matrix
@@ -101,6 +93,27 @@ public class MasterRoutingAgent extends Agent implements Drawable
         
     }
 
+    public void SendRoutes() throws IOException {
+        //TODO -- Use JADE controller to get all delivery agent names
+        //TODO -- Iterate though each existing delivery agent to send route to
+        List<Node> testRoute = new ArrayList<Node>();
+        testRoute.add(new Node("testNode", new Position(0, 0)));
+
+        MessageObject msgObject = new MessageObject();
+        msgObject.SetRoute(testRoute);
+
+        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+        msg.setLanguage("English");
+
+        //TODO -- Define proper ontology
+        msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
+
+        msg.setContentObject(msgObject);
+        msg.addReceiver(new AID("d1", AID.ISLOCALNAME));
+
+        send(msg);
+    }
+    
     //MEANT ONLY FOR TESTING DISTANCE MATRIX
     public static void main(String[] args) {
         MasterRoutingAgent masterRoutingAgent = new MasterRoutingAgent();
