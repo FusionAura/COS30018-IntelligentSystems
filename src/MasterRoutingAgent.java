@@ -9,6 +9,7 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
+import jade.wrapper.AgentController;
 
 public class MasterRoutingAgent extends Agent implements Drawable
 {
@@ -16,10 +17,12 @@ public class MasterRoutingAgent extends Agent implements Drawable
     private Position _position = new Position(0, 0);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
     private List<Node> _allNodes = new ArrayList<Node>();
+    private List<String> _deliveryAgentList = new ArrayList<String>();
     public static final String DELIVERY_ROUTE_ONTOLOGY = "Delivery-route-ontology";
 
     protected void setup()
     {
+        _deliveryAgentList = (List<String>)getArguments()[0];
         CyclicBehaviour msgListenBehaviour = new CyclicBehaviour(this)
         {
             public void action()
@@ -94,24 +97,26 @@ public class MasterRoutingAgent extends Agent implements Drawable
     }
 
     public void SendRoutes() throws IOException {
-        //TODO -- Use JADE controller to get all delivery agent names
-        //TODO -- Iterate though each existing delivery agent to send route to
-        List<Node> testRoute = new ArrayList<Node>();
-        testRoute.add(new Node("testNode", new Position(0, 0)));
+        int i = 0;
+        for(String deliveryAgentName : _deliveryAgentList)
+        {
+            List<Node> testRoute = new ArrayList<Node>();
+            testRoute.add(new Node("testNode", new Position(i, i)));
 
-        MessageObject msgObject = new MessageObject();
-        msgObject.SetRoute(testRoute);
+            MessageObject msgObject = new MessageObject();
+            msgObject.SetRoute(testRoute);
 
-        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-        msg.setLanguage("English");
+            ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+            msg.setLanguage("English");
 
-        //TODO -- Define proper ontology
-        msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
+            msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
 
-        msg.setContentObject(msgObject);
-        msg.addReceiver(new AID("d1", AID.ISLOCALNAME));
+            msg.setContentObject(msgObject);
+            msg.addReceiver(new AID(deliveryAgentName, AID.ISLOCALNAME));
 
-        send(msg);
+            send(msg);
+            i++;
+        }
     }
     
     //MEANT ONLY FOR TESTING DISTANCE MATRIX

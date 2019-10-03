@@ -2,6 +2,8 @@ import jade.core.Runtime;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.wrapper.*;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
@@ -39,7 +41,7 @@ public class MainController extends Application
         //JADE Startup
         Runtime rt= Runtime.instance();
         System.out.println(MainController.class.getName() + ": Launching the platform Main Container...");
-        Profile pMain= new ProfileImpl(null, 8888, null);
+        Profile pMain= new ProfileImpl();
         //pMain.setParameter(Profile.GUI, "true");
         ContainerController mainCtrl = rt.createMainContainer(pMain);
 
@@ -47,17 +49,25 @@ public class MainController extends Application
         // Create and start an agent of class Counter Agent
         System.out.println(MainController.class.getName() + ": Starting up the Master Controller...");
 
-        AgentController agentCtrl= mainCtrl.createNewAgent("MasterRoutingAgent", MasterRoutingAgent.class.getName(), new Object[0]);
-        agentCtrl.start();
+        List<String> deliveryAgentList = new ArrayList<String>();
 
         AgentController DeliveryAgent= mainCtrl.createNewAgent("d1", DeliveryAgent.class.getName(), new Object[0]);
         DeliveryAgent.start();
+        deliveryAgentList.add(DeliveryAgent.getName().substring(0, DeliveryAgent.getName().indexOf("@")));
 
         AgentController DeliveryAgent2= mainCtrl.createNewAgent("d2", DeliveryAgent.class.getName(), new Object[0]);
         DeliveryAgent2.start();
+        deliveryAgentList.add(DeliveryAgent2.getName().substring(0, DeliveryAgent2.getName().indexOf("@")));
 
         AgentController DeliveryAgent3= mainCtrl.createNewAgent("d3", DeliveryAgent.class.getName(), new Object[0]);
         DeliveryAgent3.start();
+        deliveryAgentList.add(DeliveryAgent3.getName().substring(0, DeliveryAgent3.getName().indexOf("@")));
+
+        Object[] mraArgs = new Object[1];
+        mraArgs[0] = deliveryAgentList;
+
+        AgentController agentCtrl= mainCtrl.createNewAgent("MasterRoutingAgent", MasterRoutingAgent.class.getName(), mraArgs);
+        agentCtrl.start();
 
 
         //Populate GUI ListView
