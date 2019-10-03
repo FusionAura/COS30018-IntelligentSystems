@@ -20,6 +20,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
 
     protected void setup()
     {
+        // Setting up message listener so that it can recieve messages from other agents
         CyclicBehaviour msgListenBehaviour = new CyclicBehaviour(this)
         {
             public void action()
@@ -33,6 +34,23 @@ public class MasterRoutingAgent extends Agent implements Drawable
             }
         };
         addBehaviour(msgListenBehaviour);
+
+        // Setting up O2A Communication so that the agent can get objects from the MainController
+        setEnabledO2ACommunication(true, 0);
+        CyclicBehaviour o2aListenBehaviour = new CyclicBehaviour(this) {
+            @Override
+            public void action() {
+                Object newObject = getO2AObject();
+
+                if (newObject != null) {
+                    if (newObject instanceof Node) {
+                        Node newNode = (Node)newObject;
+                        NewNode(newNode);
+                    }
+                }
+            }
+        };
+        addBehaviour(o2aListenBehaviour);
         try {
             SendRoutes();
         } catch (IOException e) {
@@ -41,7 +59,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
     }
 
     // Notify that a new node has been created and update the distance matrix
-    public void NewNode(Node newNode) {
+    public synchronized void NewNode(Node newNode) {
         if (_allNodes.contains(newNode)) {
             return;
         }
@@ -66,7 +84,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
         _allNodes.add(newNode);
     }
 
-    public void RemoveNode(Node node) {
+    public synchronized void RemoveNode(Node node) {
         int position = _allNodes.indexOf(node);
         if (position >= 0) {
             RemoveNode(position);
