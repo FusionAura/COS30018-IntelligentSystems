@@ -5,12 +5,14 @@ import jade.wrapper.*;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Application;
+import javafx.scene.Group;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.shape.*;
 import javafx.event.EventHandler;
 import javafx.stage.WindowEvent;
 
@@ -27,7 +29,8 @@ public class MainController extends Application
         Parent root = loader.load(); // must be called before getting the controller!
         GUIController controller = loader.getController();
         primaryStage.setTitle("Intelligent Systems Agent Program");
-        primaryStage.setScene(new Scene (root));
+        primaryStage.setScene(new Scene(root));
+
         primaryStage.show();
 
         //Close Button

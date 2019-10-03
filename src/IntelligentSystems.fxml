@@ -13,6 +13,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.shape.Line?>
 <?import javafx.scene.text.Text?>
+<?import javafx.scene.layout.*?>
 
 <VBox prefHeight="343.0" prefWidth="657.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="GUIController">
   <children>
@@ -40,7 +41,7 @@
         </Menu>
       </menus>
     </MenuBar>
-      <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="280.0" prefWidth="774.0" VBox.vgrow="ALWAYS">
+      <AnchorPane fx:id = "apMain" maxHeight="-1.0" maxWidth="-1.0" prefHeight="280.0" prefWidth="774.0" VBox.vgrow="ALWAYS">
       <children>
             <Button layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#createAgent" text="Create Agent" />
             <Button layoutX="14.0" layoutY="283.0" mnemonicParsing="false" text="Delete Agent" />
@@ -50,24 +51,25 @@
             <TreeView layoutX="280.0" layoutY="39.0" prefHeight="200.0" prefWidth="168.0" />
             <Text layoutX="15.0" layoutY="259.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Number of Delivery Agents:" />
             <Button layoutX="138.0" layoutY="14.0" mnemonicParsing="false" text="Pause" />
-            <Circle fill="DODGERBLUE" layoutX="544.0" layoutY="139.0" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fill="DODGERBLUE" layoutX="580.0" layoutY="93.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fill="DODGERBLUE" layoutX="561.0" layoutY="50.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fill="DODGERBLUE" layoutX="625.0" layoutY="110.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fill="DODGERBLUE" layoutX="577.0" layoutY="206.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fill="DODGERBLUE" layoutX="505.0" layoutY="262.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fill="DODGERBLUE" layoutX="463.0" layoutY="93.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fill="DODGERBLUE" layoutX="464.0" layoutY="184.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Line endX="19.0" endY="40.0" layoutX="561.0" layoutY="53.0" startY="-3.0" />
-            <Line endX="36.7071533203125" endY="-45.292877197265625" layoutX="544.0" layoutY="139.0" startY="-8.0" />
-            <Line endX="81.0" endY="-22.0" layoutX="544.0" layoutY="132.0" startX="8.0" startY="7.0" />
-            <Line endX="168.0" endY="-93.0" layoutX="457.0" layoutY="203.0" startX="120.0" startY="3.0" />
-            <Line endX="61.2928466796875" endY="-2.29290771484375" layoutX="515.0" layoutY="209.0" startX="-7.0" startY="53.0" />
-            <Line endX="114.0" endY="-62.0" layoutX="430.0" layoutY="209.0" startX="78.0" startY="53.0" />
-            <Line endX="108.2928466796875" endY="6.70709228515625" layoutX="435.0" layoutY="125.0" startX="31.0" startY="-32.0" />
-            <Line endX="45.0" endY="-44.0" layoutX="418.0" layoutY="140.0" startX="45.0" startY="43.0" />
-            <Line endX="117.0" endY="-14.0" layoutX="444.0" layoutY="64.0" startX="21.2928466796875" startY="28.29290771484375" />
-            <Line endX="124.0" endY="-50.0" layoutX="412.0" layoutY="189.0" startX="51.5" startY="-5.5" />
+            <Pane fx:id="mapPane" layoutX="500" layoutY="0" prefWidth="250" prefHeight="350"/>
+          <!---
+   <Circle fill="DODGERBLUE" layoutX="544.0" layoutY="139.0" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
+   <Circle fill="DODGERBLUE" layoutX="580.0" layoutY="93.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+   <Circle fill="DODGERBLUE" layoutX="561.0" layoutY="50.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+   <Circle fill="DODGERBLUE" layoutX="625.0" layoutY="110.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+   <Circle fill="DODGERBLUE" layoutX="577.0" layoutY="206.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+   <Circle fill="DODGERBLUE" layoutX="505.0" layoutY="262.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+   <Circle fill="DODGERBLUE" layoutX="463.0" layoutY="93.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+   <Circle fill="DODGERBLUE" layoutX="464.0" layoutY="184.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+   <Line endX="36.7071533203125" endY="-45.292877197265625" layoutX="544.0" layoutY="139.0" startY="-8.0" />
+   <Line endX="81.0" endY="-22.0" layoutX="544.0" layoutY="132.0" startX="8.0" startY="7.0" />
+   <Line endX="168.0" endY="-93.0" layoutX="457.0" layoutY="203.0" startX="120.0" startY="3.0" />
+   <Line endX="61.2928466796875" endY="-2.29290771484375" layoutX="515.0" layoutY="209.0" startX="-7.0" startY="53.0" />
+   <Line endX="114.0" endY="-62.0" layoutX="430.0" layoutY="209.0" startX="78.0" startY="53.0" />
+   <Line endX="108.2928466796875" endY="6.70709228515625" layoutX="435.0" layoutY="125.0" startX="31.0" startY="-32.0" />
+   <Line endX="45.0" endY="-44.0" layoutX="418.0" layoutY="140.0" startX="45.0" startY="43.0" />
+   <Line endX="117.0" endY="-14.0" layoutX="444.0" layoutY="64.0" startX="21.2928466796875" startY="28.29290771484375" />
+   <Line endX="124.0" endY="-50.0" layoutX="412.0" layoutY="189.0" startX="51.5" startY="-5.5" />-->
             <Text fx:id="AgentNum" layoutX="167.0" layoutY="259.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Num" wrappingWidth="37.0" />
       </children>
       </AnchorPane>
