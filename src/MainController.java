@@ -12,10 +12,19 @@ import javafx.scene.Scene;
 import javafx.event.EventHandler;
 import javafx.stage.WindowEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainController extends Application
 {
     @FXML
     public ListView AgentsList;
+
+    private List<Node> _nodes = new ArrayList<>();
+    private List<Parcel> _parcels = new ArrayList<>();
+    private GUIController _guiController;
+    private AgentController _mainAgentController;
+    private ContainerController _mainCtrl;
 
     @Override
     public void start(Stage primaryStage) throws Exception
@@ -23,7 +32,7 @@ public class MainController extends Application
         //Load GUI
         FXMLLoader loader = new FXMLLoader(getClass().getResource("IntelligentSystems.fxml"));
         Parent root = loader.load(); // must be called before getting the controller!
-        GUIController controller = loader.getController();
+        _guiController = loader.getController();
         primaryStage.setTitle("Intelligent Systems Agent Program");
         primaryStage.setScene(new Scene (root));
         primaryStage.show();
@@ -41,39 +50,79 @@ public class MainController extends Application
         System.out.println(MainController.class.getName() + ": Launching the platform Main Container...");
         Profile pMain= new ProfileImpl(null, 8888, null);
         //pMain.setParameter(Profile.GUI, "true");
-        ContainerController mainCtrl = rt.createMainContainer(pMain);
+        _mainCtrl = rt.createMainContainer(pMain);
 
 
         // Create and start an agent of class Counter Agent
         System.out.println(MainController.class.getName() + ": Starting up the Master Controller...");
 
-        AgentController agentCtrl= mainCtrl.createNewAgent("MasterRoutingAgent", MasterRoutingAgent.class.getName(), new Object[0]);
-        agentCtrl.start();
+        _mainAgentController = _mainCtrl.createNewAgent("MasterRoutingAgent", MasterRoutingAgent.class.getName(), new Object[0]);
+        _mainAgentController.start();
 
-        AgentController DeliveryAgent= mainCtrl.createNewAgent("d1", DeliveryAgent.class.getName(), new Object[0]);
-        DeliveryAgent.start();
-
-        AgentController DeliveryAgent2= mainCtrl.createNewAgent("d2", DeliveryAgent.class.getName(), new Object[0]);
-        DeliveryAgent2.start();
-
-        AgentController DeliveryAgent3= mainCtrl.createNewAgent("d3", DeliveryAgent.class.getName(), new Object[0]);
-        DeliveryAgent3.start();
-
+        readFromConfigFile();
 
         //Populate GUI ListView
-        controller.DoList.add(agentCtrl.getName());
-        controller.DoList.add(DeliveryAgent.getName());
-        controller.DoList.add(DeliveryAgent2.getName());
-        controller.DoList.add(DeliveryAgent3.getName());
-        controller.PopulateAgentList();
+        _guiController.PopulateAgentList();
 
-        controller.MainClass = this;
-        controller.AgentNum.setText(String.valueOf(controller.DoList.size()-1));
+        _guiController.MainClass = this;
+        _guiController.AgentNum.setText(String.valueOf(_guiController.DoList.size()-1));
 
     }
 
     public static void main (String[] args) throws StaleProxyException
     {
         launch(args);
+    }
+
+    private void readFromConfigFile() {
+        CSVFileReader reader = new CSVFileReader();
+        List<List<String>> output = reader.readFromFile("app.config");
+
+        for (List<String> line : output) {
+            String type = line.get(0);
+
+            switch (type) {
+                case "S":
+                    // General settings such as number of delivery agents.
+                    // S,numOfDeliveryAgents
+                    int numOfDeliveryAgents = Integer.parseInt(line.get(1));
+                    for (int i = 1; i <= numOfDeliveryAgents; i++) {
+                        try {
+                            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + i, DeliveryAgent.class.getName(), new Object[0]);
+                            newDeliveryAgent.start();
+                            _guiController.DoList.add(newDeliveryAgent.getName());
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                    break;
+
+                case "N":
+                    // Here the node is created. Master routing agent must be notified.
+                    // N,posX,posY,nodeName
+                    Position nodePosition = new Position(Double.parseDouble(line.get(1)), Double.parseDouble(line.get(2)));
+                    Node node = new Node(line.get(3), nodePosition);
+                    _nodes.add(node);
+
+                    try {
+                        _mainAgentController.putO2AObject(node, false);
+                    } catch (StaleProxyException e) {
+                        e.printStackTrace();
+                    }
+
+                    break;
+
+                case "P":
+                    // Add in another parcel. Must have a destination.
+                    // P,weight,destination
+                    Parcel parcel = new Parcel(line.get(2), Integer.parseInt(line.get(1)));
+                    _parcels.add(parcel);
+                    break;
+
+                default:
+                    System.out.println("Invalid line, ignoring");
+            }
+        }
     }
 }
