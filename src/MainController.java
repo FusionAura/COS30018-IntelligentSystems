@@ -82,6 +82,9 @@ public class MainController extends Application
 
         controller.MainClass = this;
         controller.AgentNum.setText(String.valueOf(controller.DoList.size()-1));
+        controller.scene = primaryStage.getScene();
+
+        controller.DrawMap();
 
     }
 
