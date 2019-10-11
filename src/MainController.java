@@ -1,13 +1,18 @@
+import jade.core.AID;
 import jade.core.Runtime;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.wrapper.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import jade.wrapper.gateway.JadeGateway;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -29,6 +34,18 @@ public class MainController extends Application
     private GUIController _guiController;
     private AgentController _mainAgentController;
     private ContainerController _mainCtrl;
+
+    private Color[] _deliveryColors = {
+            Color.BLUE,
+            Color.GREEN,
+            Color.YELLOW,
+            Color.RED,
+            Color.AQUA,
+            Color.LIME,
+            Color.GOLD,
+            Color.CRIMSON
+    };
+    private int _deliveryColorPosition = 0;
 
     @Override
     public void start(Stage primaryStage) throws Exception
@@ -63,6 +80,8 @@ public class MainController extends Application
         
         _mainAgentController = _mainCtrl.createNewAgent("MasterRoutingAgent", MasterRoutingAgent.class.getName(), new Object[0]);
         _mainAgentController.start();
+        //Register Master Routing position
+        _guiController.RegisterCircle(new Circle(100, 100, 10, Color.CHOCOLATE));
 
         readFromConfigFile();
 
@@ -72,9 +91,13 @@ public class MainController extends Application
         _guiController.MainClass = this;
         _guiController.AgentNum.setText(String.valueOf(_guiController.DoList.size()-1));
         _guiController.scene = primaryStage.getScene();
-        
-        _guiController.DrawMap();
 
+        JadeGateway.execute(new OneShotBehaviour() {
+            @Override
+            public void action() {
+
+            }
+        });
     }
 
     public static void main (String[] args) throws StaleProxyException
@@ -99,6 +122,15 @@ public class MainController extends Application
                             AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + i, DeliveryAgent.class.getName(), new Object[0]);
                             newDeliveryAgent.start();
                             _guiController.DoList.add(newDeliveryAgent.getName());
+
+                            Circle agentBody = new Circle(100, 100, 5, _deliveryColors[_deliveryColorPosition]);
+                            _deliveryColorPosition++;
+                            if (_deliveryColorPosition == _deliveryColors.length) {
+                                _deliveryColorPosition = 0;
+                            }
+
+                            newDeliveryAgent.putO2AObject(agentBody, true);
+                            _guiController.RegisterCircle(agentBody);
                         } catch (StaleProxyException e) {
                             e.printStackTrace();
                         }
@@ -110,7 +142,9 @@ public class MainController extends Application
                     // Here the node is created. Master routing agent must be notified.
                     // N,posX,posY,nodeName
                     Position nodePosition = new Position(Double.parseDouble(line.get(1)), Double.parseDouble(line.get(2)));
+
                     Node node = new Node(line.get(3), nodePosition);
+                    _guiController.RegisterCircle(node.getBody());
                     _nodes.add(node);
 
                     try {

@@ -1,3 +1,5 @@
+import javafx.animation.Animation;
+import javafx.animation.SequentialTransition;
 import javafx.animation.TranslateTransition;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -41,37 +43,8 @@ public class GUIController implements Initializable {
 
     public Scene scene;
 
-    private List<Circle> _mapNodes;
 
-    public void initialize(URL url, ResourceBundle rb)
-    {
-        List<Circle> nodePoints = new ArrayList<Circle>();
-        List<Line> mapLines = new ArrayList<Line>();
-
-        nodePoints.add(new Circle(10, 10, 3, Color.BLACK));
-        nodePoints.add(new Circle(190, 10, 3, Color.BLACK));
-        nodePoints.add(new Circle(10, 190, 3, Color.BLACK));
-        nodePoints.add(new Circle(190, 190, 3, Color.BLACK));
-        nodePoints.add(new Circle(100, 100, 3, Color.BLACK));
-
-        _mapNodes = nodePoints;
-
-        mapLines.add(new Line(10, 10, 100, 100));
-        mapLines.add(new Line(190, 10, 100, 100));
-        mapLines.add(new Line(10, 190, 100, 100));
-        mapLines.add(new Line(190, 190, 100, 100));
-        mapLines.add(new Line(10, 10, 10, 190));
-        mapLines.add(new Line(190, 10, 190, 190));
-
-        for(Line l : mapLines)
-        {
-            mapPane.getChildren().add(l);
-        }
-
-        for(Circle c : nodePoints)
-        {
-            mapPane.getChildren().add(c);
-        }
+    public void initialize(URL url, ResourceBundle rb) {
     }
 
     @FXML
@@ -93,19 +66,8 @@ public class GUIController implements Initializable {
         AgentsList.setItems(FXCollections.observableList(DoList));
     }
 
-    public void DrawMap()
-    {
-        Circle mraShape = new Circle(100, 100, 10, Color.GRAY);
-        mraShape.setStroke(Color.BLACK);
-        TranslateTransition transition = createTranslateTransition(mraShape);
-        transition.setDuration(Duration.millis(1000));
-        transition.setNode(mraShape);
-        transition.setCycleCount(1);
-        mapPane.getChildren().add(mraShape);
-
-
-
-        moveCircle(mraShape, transition);
+    public void RegisterCircle(Circle newCircle) {
+        mapPane.getChildren().add(newCircle);
     }
 
     public void Quit()
@@ -113,51 +75,31 @@ public class GUIController implements Initializable {
         System.exit(0);
     }
 
-    private TranslateTransition createTranslateTransition(Circle circle)
-    {
-        TranslateTransition transition = new TranslateTransition(Duration.seconds(0.25), circle);
-        return transition;
-    }
-
-    private void moveCircle(Circle circle, TranslateTransition transition)
+    /*
+    private void moveCircle(Circle... circles)
     {
         scene.setOnMousePressed(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                for (Circle c : _mapNodes) {
-                    if(circle.getCenterY()>c.getCenterY())
-                    {
-                        transition.setByY(c.getCenterY() - circle.getCenterY());
-                    }
-                    else if(circle.getCenterY()<c.getCenterY())
-                    {
-                        transition.setByY(c.getCenterY() + circle.getCenterY());
-                    }
-                    else
-                    {
-                        transition.setByY(0);
+                for (Circle circle : circles) {
+                    List<TranslateTransition> transitions = new ArrayList<>();
+                    for (int i = 0; i < _mapNodes.size(); i++) {
+                        TranslateTransition transition = new TranslateTransition(Duration.seconds(1), circle);
+                        Circle c = _mapNodes.get(i);
+                        Circle cNext = _mapNodes.size() == i + 1 ? _mapNodes.get(0) : _mapNodes.get(i + 1);
+
+                        transition.setByY(cNext.getCenterY() - c.getCenterY());
+                        transition.setByX(cNext.getCenterX() - c.getCenterX());
+
+                        transitions.add(transition);
                     }
 
-                    if(circle.getCenterX()>c.getCenterX())
-                    {
-                        transition.setByX(c.getCenterX() - circle.getCenterX());
-                    }
-                    else if(circle.getCenterX()<c.getCenterX())
-                    {
-                        transition.setByX(c.getCenterX() + circle.getCenterX());
-                    }
-                    else
-                    {
-                        transition.setByX(0);
-                    }
-
-                    transition.play();
-                    circle.setCenterY(c.getCenterY());
-                    circle.setCenterX(c.getCenterX());
-                    System.out.println(circle.getCenterX()+", "+circle.getCenterY());
-                    System.out.println("Iterated");
+                    SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[transitions.size()]));
+                    sequentialTransition.play();
                 }
             }
         });
     }
+
+     */
 }

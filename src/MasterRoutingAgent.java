@@ -53,11 +53,11 @@ public class MasterRoutingAgent extends Agent implements Drawable
             }
         };
         addBehaviour(o2aListenBehaviour);
-        try {
+        /*try {
             SendRoutes();
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     // Notify that a new node has been created and update the distance matrix
@@ -115,7 +115,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
 
     public void SendRoutes() throws IOException {
         int i = 0;
-        for(String deliveryAgentName : _deliveryAgentList)
+        for (String deliveryAgentName : _deliveryAgentList)
         {
             List<Node> testRoute = new ArrayList<Node>();
             testRoute.add(new Node("testNode", new Position(i, i)));
