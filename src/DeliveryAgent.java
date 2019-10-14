@@ -12,7 +12,7 @@ import java.util.List;
 public class DeliveryAgent extends Agent implements Drawable
 {
     private List<Node> _route = new ArrayList<Node>();
-    private double _speed = 5;
+    private double _speed = 20;
     private Circle _body = null;
 
     protected void setup()
@@ -42,21 +42,8 @@ public class DeliveryAgent extends Agent implements Drawable
             }
         });
 
-        // Setting up O2A Communication so that the agent can get objects from the MainController
-        setEnabledO2ACommunication(true, 0);
-        CyclicBehaviour o2aListenBehaviour = new CyclicBehaviour(this) {
-            @Override
-            public void action() {
-                Object newObject = getO2AObject();
-
-                if (newObject != null) {
-                    if (newObject instanceof Circle) {
-                        _body = (Circle) newObject;
-                    }
-                }
-            }
-        };
-        addBehaviour(o2aListenBehaviour);
+        Object[] args = getArguments();
+        _body = (Circle) args[0];
     }
 
     // When this method is called, the delivery agent moves towards its next destination by deltaTime (if it has one)
@@ -74,7 +61,7 @@ public class DeliveryAgent extends Agent implements Drawable
             double yTransition = nextNode.getY() - thisNode.getY();
 
             double distance = Math.sqrt(Math.pow(xTransition, 2) + Math.pow(yTransition, 2));
-            double seconds = _speed / distance;
+            double seconds = distance / _speed;
 
             TranslateTransition transition = new TranslateTransition(Duration.seconds(seconds), _body);
             transition.setByX(xTransition);
@@ -82,9 +69,10 @@ public class DeliveryAgent extends Agent implements Drawable
 
             transitions.add(transition);
         }
-
-        SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[transitions.size()]));
-        sequentialTransition.play();
+        synchronized (DeliveryAgent.class) {
+            SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[transitions.size()]));
+            sequentialTransition.play();
+        }
     }
 
     @Override

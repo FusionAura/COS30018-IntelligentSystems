@@ -100,6 +100,15 @@ public class MainController extends Application
         });
     }
 
+    public void runAction() {
+        try {
+            Drawable drawable = _mainAgentController.getO2AInterface(Drawable.class);
+            drawable.Draw();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main (String[] args) throws StaleProxyException
     {
         launch(args);
@@ -119,18 +128,17 @@ public class MainController extends Application
                     int numOfDeliveryAgents = Integer.parseInt(line.get(1));
                     for (int i = 1; i <= numOfDeliveryAgents; i++) {
                         try {
-                            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + i, DeliveryAgent.class.getName(), new Object[0]);
-                            newDeliveryAgent.start();
-                            _guiController.DoList.add(newDeliveryAgent.getName());
-
                             Circle agentBody = new Circle(100, 100, 5, _deliveryColors[_deliveryColorPosition]);
                             _deliveryColorPosition++;
                             if (_deliveryColorPosition == _deliveryColors.length) {
                                 _deliveryColorPosition = 0;
                             }
 
-                            newDeliveryAgent.putO2AObject(agentBody, true);
                             _guiController.RegisterCircle(agentBody);
+
+                            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + i, DeliveryAgent.class.getName(), new Object[] {agentBody});
+                            newDeliveryAgent.start();
+                            _guiController.DoList.add(newDeliveryAgent.getName());
                         } catch (StaleProxyException e) {
                             e.printStackTrace();
                         }

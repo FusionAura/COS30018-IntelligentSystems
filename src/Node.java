@@ -5,11 +5,11 @@ import java.io.Serializable;
 
 public class Node implements Drawable, Serializable {
     private String _name;
-    private Circle _body;
+    private Position _position;
 
     public Node(String name, Position position) {
         _name = name;
-        _body = new Circle(position.getX(), position.getY(), 10, Color.GRAY);
+        _position = position;
     }
     public boolean isAddress(String address) {
         return address.equals(_name);
@@ -21,14 +21,16 @@ public class Node implements Drawable, Serializable {
     }
 
     public Circle getBody() {
-        return _body;
+        Circle body = new Circle(_position.getX(), _position.getY(), 10, Color.GRAY);
+        body.toBack();
+        return body;
     }
 
     public double getX() {
-        return _body.getCenterX();
+        return _position.getX();
     }
 
     public double getY() {
-        return _body.getCenterY();
+        return _position.getY();
     }
 }

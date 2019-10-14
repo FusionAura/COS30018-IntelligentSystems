@@ -1,6 +1,7 @@
 import javafx.animation.Animation;
 import javafx.animation.SequentialTransition;
 import javafx.animation.TranslateTransition;
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -58,6 +59,11 @@ public class GUIController implements Initializable {
     public void PopulateAgentList()
     {
         AgentsList.setItems(FXCollections.observableList(DoList));
+    }
+
+    @FXML
+    public void runButton() {
+        MainClass.runAction();
     }
 
     public void RefreshGUI()

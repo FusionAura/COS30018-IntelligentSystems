@@ -1,3 +1,4 @@
+import java.io.Externalizable;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -8,13 +9,16 @@ import java.util.Random;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.domain.AMSService;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.wrapper.AgentController;
 
 public class MasterRoutingAgent extends Agent implements Drawable
 {
     private int _capacity;
-    private Position _position = new Position(0, 0);
+    private Position _position = new Position(100, 100);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
     private List<Node> _allNodes = new ArrayList<Node>();
     private List<String> _deliveryAgentList = new ArrayList<String>();
@@ -22,6 +26,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
 
     protected void setup()
     {
+        registerO2AInterface(Drawable.class, this);
         // Setting up message listener so that it can recieve messages from other agents
         CyclicBehaviour msgListenBehaviour = new CyclicBehaviour(this)
         {
@@ -110,15 +115,29 @@ public class MasterRoutingAgent extends Agent implements Drawable
 
     @Override
     public void Draw() {
-        
+        try {
+            SendRoutes();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void SendRoutes() throws IOException {
-        int i = 0;
-        for (String deliveryAgentName : _deliveryAgentList)
+        AMSAgentDescription[] agents = null;
+        try {
+            SearchConstraints c = new SearchConstraints();
+            c.setMaxResults(new Long(-1));
+            agents = AMSService.search(this, new AMSAgentDescription(), c);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        for (int i = 0; i < agents.length; i++)
         {
             List<Node> testRoute = new ArrayList<Node>();
-            testRoute.add(new Node("testNode", new Position(i, i)));
+            testRoute.add(new Node("testNode", _position));
+            testRoute.add(_allNodes.get(0));
 
             MessageObject msgObject = new MessageObject();
             msgObject.SetRoute(testRoute);
@@ -129,10 +148,9 @@ public class MasterRoutingAgent extends Agent implements Drawable
             msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
 
             msg.setContentObject(msgObject);
-            msg.addReceiver(new AID(deliveryAgentName, AID.ISLOCALNAME));
+            msg.addReceiver(agents[i].getName());
 
             send(msg);
-            i++;
         }
     }
     
