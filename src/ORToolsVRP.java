@@ -13,12 +13,10 @@
 
 // [START program]
 // [START import]
-import com.google.ortools.constraintsolver.Assignment;
-import com.google.ortools.constraintsolver.FirstSolutionStrategy;
-import com.google.ortools.constraintsolver.RoutingIndexManager;
-import com.google.ortools.constraintsolver.RoutingModel;
-import com.google.ortools.constraintsolver.RoutingSearchParameters;
-import com.google.ortools.constraintsolver.main;
+import com.google.ortools.constraintsolver.*;
+import com.google.protobuf.Duration;
+
+import java.util.List;
 import java.util.logging.Logger;
 // [END import]
 
@@ -51,7 +49,12 @@ public class ORToolsVRP {
                 {776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274, 388, 422, 764, 0, 798},
                 {662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730, 536, 194, 798, 0},
         };
-        public final int vehicleNumber = 4;
+        public final int vehicleNumber = 3;
+        //demand of each node 0 for 0 as that is our depot, and 1 for every other node location because we want to visit
+        //them once only
+        public final long[] demands = {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+        //vehicle capacity not extending weight yet
+        public final long[] vehicleCapacities = {6,6,6};
         public final int depot = 0;
     }
     // [END data_model]
@@ -89,7 +92,6 @@ public class ORToolsVRP {
         // [START data]
         final DataModel data = new DataModel();
         // [END data]
-
         // Create Routing Index Manager
         // [START index_manager]
         RoutingIndexManager manager =
@@ -99,7 +101,6 @@ public class ORToolsVRP {
         // [START routing_model]
         RoutingModel routing = new RoutingModel(manager);
         // [END routing_model]
-
         // Create and register a transit callback.
         // [START transit_callback]
         final int transitCallbackIndex =
@@ -154,6 +155,8 @@ public class ORToolsVRP {
 
         // Create and register a transit callback.
         // [START transit_callback]
+        //this function to calculate distances between nodes to be used to be an Arc cost of our search below
+        //as our Cost is just distance between all the nodes a vehicle has to travel.
         final int transitCallbackIndex =
                 routing.registerTransitCallback((long fromIndex, long toIndex) -> {
                     // Convert from routing variable Index to user NodeIndex.
@@ -165,26 +168,54 @@ public class ORToolsVRP {
 
         // Define cost of each arc.
         // [START arc_cost]
+        //the code to tell routing object how to evaluate arc cost of vehicles for the search
         routing.setArcCostEvaluatorOfAllVehicles(transitCallbackIndex);
         // [END arc_cost]
-
+        // Add Capacity constraint.
+        //same as the above callback for distanc ebetween node, here regarding demand for our case 1 demand
+        //per location to be the constraint that each location is visited once
+        final int demandCallbackIndex = routing.registerUnaryTransitCallback((long fromIndex) -> {
+            // Convert from routing variable Index to user NodeIndex.
+            int fromNode = manager.indexToNode(fromIndex);
+            return data.demands[fromNode];
+        });
+        routing.addDimensionWithVehicleCapacity(demandCallbackIndex, 0, // null capacity slack
+                data.vehicleCapacities, // vehicle maximum capacities
+                true, // start cumul to zero
+                "Capacity");
         // Setting first solution heuristic.
         // [START parameters]
         RoutingSearchParameters searchParameters =
                 main.defaultRoutingSearchParameters()
                         .toBuilder()
-                        .setFirstSolutionStrategy(FirstSolutionStrategy.Value.PATH_CHEAPEST_ARC)
+                        //.setFirstSolutionStrategy(FirstSolutionStrategy.Value.PATH_CHEAPEST_ARC)
+                        //.setTimeLimit(Duration.newBuilder().setSeconds(10).build())
+                        .setSolutionLimit(2)
                         .build();
-        // [END parameters]
+//        // [END parameters]
+//        // Solve the problem.
+//        // [START solve]
+//        Assignment solution = routing.solveWithParameters(searchParameters);
+//        // [END solve]
 
-        // Solve the problem.
-        // [START solve]
+        //using the above basic search paramater and solution to start trialing algorithms.
+        long satisfaction = 0;
         Assignment solution = routing.solveWithParameters(searchParameters);
-        // [END solve]
-
         // Print solution on console.
         // [START print_solution]
         printSolution(data, routing, manager, solution);
         // [END print_solution]
     }
+
+    //converts our nested list distance matrix to an array to match ORTool's setup
+    //with default vehicles = 3, demand 1 at each location 0 at depot.
+//    public void ConvertDataModel(List<List<Long>> dataMatrix)
+//    {
+//        final long[][] distanceMatrix = new long[dataMatrix.size()][];
+//        long[] fillArray = new long[0];
+//        for (int i=0; i< dataMatrix.size(); i++)
+//        {
+//            distanceMatrix[i] = dataMatrix.get(i).toArray(fillArray);
+//        }
+//    }
 }
