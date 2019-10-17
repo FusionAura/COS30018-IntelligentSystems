@@ -1,3 +1,6 @@
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+
 import java.io.Serializable;
 
 public class Node implements Drawable, Serializable {
@@ -8,7 +11,6 @@ public class Node implements Drawable, Serializable {
         _name = name;
         _position = position;
     }
-
     public boolean isAddress(String address) {
         return address.equals(_name);
     }
@@ -16,6 +18,12 @@ public class Node implements Drawable, Serializable {
     @Override
     public void Draw() {
 
+    }
+
+    public Circle getBody() {
+        Circle body = new Circle(_position.getX(), _position.getY(), 10, Color.GRAY);
+        body.toBack();
+        return body;
     }
 
     public double getX() {
