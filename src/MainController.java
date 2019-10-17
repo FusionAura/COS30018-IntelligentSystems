@@ -113,10 +113,10 @@ public class MainController extends Application {
             Drawable o2a = _mainAgentController.getO2AInterface(Drawable.class);
             o2a.GetAgent();
         }
-        catch(StaleProxyException e)
-        {
-        _guiController.AgentNum.setText(String.valueOf(_guiController.DoList.size()-1));
-        _guiController.scene = primaryStage.getScene();
+        catch(StaleProxyException e) {
+            _guiController.AgentNum.setText(String.valueOf(_guiController.DoList.size() - 1));
+            _guiController.scene = primaryStage.getScene();
+        }
 
     }
 

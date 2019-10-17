@@ -67,6 +67,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
             }
         };
         addBehaviour(o2aListenBehaviour);
+        addBehaviour(new VrpOneShot());
         /*try {
             SendRoutes();
         } catch (IOException e) {
@@ -96,8 +97,6 @@ public class MasterRoutingAgent extends Agent implements Drawable
                             + i + ": " + agentID.getName()
             );
         }
-        send(msg);
-        addBehaviour(new VrpOneShot());
     }
 
     // Notify that a new node has been created and update the distance matrix
