@@ -1,6 +1,15 @@
 import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.*;
+import javafx.animation.SequentialTransition;
+import javafx.animation.TranslateTransition;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.shape.Circle;
+import javafx.util.Duration;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,8 +17,9 @@ import java.util.List;
 public class DeliveryAgent extends Agent implements Drawable
 {
     private List<Node> _route = new ArrayList<Node>();
-    private long _speed = 5;
-    private Position _position = new Position(0, 0);
+    private double _speed = 20;
+    private boolean _isTraveling = false;
+    private Circle _body = null;
 
     protected void setup()
     {
@@ -20,15 +30,66 @@ public class DeliveryAgent extends Agent implements Drawable
                 ACLMessage msg = receive();
                 if(msg!=null)
                 {
-                    System.out.println(getLocalName()+" Received message "+msg.getContent()+" from "+msg.getSender().getLocalName());
-                    ACLMessage reply = msg.createReply();
-                    reply.setPerformative(ACLMessage.INFORM);
-                    reply.setContent("Agent "+getLocalName()+" responding!");
-                    System.out.println(getLocalName()+": Sending response "+reply.getContent()+" to "+msg.getAllReceiver().next());
-                    send(reply);
+                    //Ontology check exists if we need to send different types of messages
+                    if(msg.getOntology().equals(MasterRoutingAgent.DELIVERY_ROUTE_ONTOLOGY))
+                    {
+                        if (_isTraveling) {
+                            System.out.println("Got a route, but I'm Travelling! Ignoring...");
+                        } else {
+                            try {
+                                System.out.println("Delivery route message received!");
+                                MessageObject msgObject = (MessageObject) msg.getContentObject();
+                                _route = msgObject.GetRoute();
+                                System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getY());
+                                System.out.println("Delivery route successfully added!");
+                                FollowRoute();
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
                 }
             }
         });
+
+        Object[] args = getArguments();
+        _body = (Circle) args[0];
+    }
+
+    // When this method is called, the delivery agent moves towards its next destination by deltaTime (if it has one)
+    public void FollowRoute() {
+        if (_route.size() == 0 || _body == null) {
+            return;
+        }
+        _isTraveling = true;
+
+        List<TranslateTransition> transitions = new ArrayList<>();
+        for (int i = 0; i < _route.size(); i++) {
+            Node thisNode = _route.get(i);
+            Node nextNode = _route.size() == i + 1 ? _route.get(0) : _route.get(i + 1);
+
+            double xTransition = nextNode.getX() - thisNode.getX();
+            double yTransition = nextNode.getY() - thisNode.getY();
+
+            double distance = Math.sqrt(Math.pow(xTransition, 2) + Math.pow(yTransition, 2));
+            double seconds = distance / _speed;
+
+            TranslateTransition transition = new TranslateTransition(Duration.seconds(seconds), _body);
+            transition.setByX(xTransition);
+            transition.setByY(yTransition);
+
+            transitions.add(transition);
+        }
+        synchronized (DeliveryAgent.class) {
+            SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[transitions.size()]));
+            sequentialTransition.onFinishedProperty().set(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+                    _isTraveling = false;
+                }
+            });
+            sequentialTransition.play();
+        }
     }
 
     // When this method is called, the delivery agent moves towards its next destination by deltaTime (if it has one)
@@ -72,6 +133,12 @@ public class DeliveryAgent extends Agent implements Drawable
 
     @Override
     public void Draw() {
+        _route.add(new Node("AS", new Position(100, 100)));
+        _route.add(new Node("AS", new Position(167.24, 98.35)));
+        FollowRoute();
+    }
+    @Override
+    public void GetAgent() {
 
     }
 }
