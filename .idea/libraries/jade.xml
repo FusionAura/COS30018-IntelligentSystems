@@ -2,10 +2,14 @@
   <library name="jade">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/jade.jar!/" />
-      <root url="file://$PATH_TO__FX$" />
+      <root url="jar://$PROJECT_DIR$/lib/com.google.ortools.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/protobuf.jar!/" />
     </CLASSES>
     <JAVADOC />
+    <NATIVE>
+      <root url="file://$PROJECT_DIR$/lib" />
+    </NATIVE>
     <SOURCES />
-    <jarDirectory url="file://$PATH_TO__FX$" recursive="false" />
+
   </library>
 </component>

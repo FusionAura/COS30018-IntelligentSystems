@@ -19,6 +19,7 @@ public class Node implements Drawable, Serializable {
     public void Draw() {
 
     }
+
     @Override
     public void GetAgent() {
     }
@@ -28,6 +29,7 @@ public class Node implements Drawable, Serializable {
         body.toBack();
         return body;
     }
+
 
     public double getX() {
         return _position.getX();

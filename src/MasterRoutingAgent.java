@@ -10,6 +10,7 @@ import examples.content.sfo.Main;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.AMSService;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
@@ -25,7 +26,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
     private List<String> _deliveryAgentList = new ArrayList<String>();
     public static final String DELIVERY_ROUTE_ONTOLOGY = "Delivery-route-ontology";
     AMSAgentDescription [] agents = null;
-
+    
     protected void setup()
     {
         //https://stackoverflow.com/questions/28652869/how-to-get-agents-on-all-containers-jade
@@ -95,6 +96,8 @@ public class MasterRoutingAgent extends Agent implements Drawable
                             + i + ": " + agentID.getName()
             );
         }
+        send(msg);
+        addBehaviour(new VrpOneShot());
     }
 
     // Notify that a new node has been created and update the distance matrix
@@ -208,5 +211,18 @@ public class MasterRoutingAgent extends Agent implements Drawable
 
     public List<List<Double>> get_distanceMatrix() {
         return _distanceMatrix;
+    }
+
+    private class VrpOneShot extends OneShotBehaviour {
+        VrpOneShot() {
+            System.out.println(getBehaviourName() + ": I have been created");
+        }
+
+        @Override
+        public void action() {
+            System.out.println(getBehaviourName() + ": I will be executed only once");
+            ORToolsVRP test = new ORToolsVRP();
+            test.Calc();
+        }
     }
 }
