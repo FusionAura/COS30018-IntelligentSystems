@@ -19,7 +19,10 @@ public class Node implements Drawable, Serializable {
     public void Draw() {
 
     }
-
+    @Override
+    public void GetAgent() {
+    }
+  
     public Circle getBody() {
         Circle body = new Circle(_position.getX(), _position.getY(), 10, Color.GRAY);
         body.toBack();

@@ -95,4 +95,8 @@ public class DeliveryAgent extends Agent implements Drawable
         _route.add(new Node("AS", new Position(167.24, 98.35)));
         FollowRoute();
     }
+    @Override
+    public void GetAgent() {
+
+    }
 }

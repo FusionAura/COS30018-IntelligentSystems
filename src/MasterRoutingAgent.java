@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import examples.content.sfo.Main;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -23,19 +24,26 @@ public class MasterRoutingAgent extends Agent implements Drawable
     private List<Node> _allNodes = new ArrayList<Node>();
     private List<String> _deliveryAgentList = new ArrayList<String>();
     public static final String DELIVERY_ROUTE_ONTOLOGY = "Delivery-route-ontology";
+    AMSAgentDescription [] agents = null;
 
     protected void setup()
     {
+        //https://stackoverflow.com/questions/28652869/how-to-get-agents-on-all-containers-jade
         registerO2AInterface(Drawable.class, this);
         // Setting up message listener so that it can recieve messages from other agents
         CyclicBehaviour msgListenBehaviour = new CyclicBehaviour(this)
         {
+
             public void action()
             {
                 ACLMessage msg = receive();
                 if(msg!=null)
                 {
-                    System.out.println(getLocalName()+": Received response "+msg.getContent()+" from "+msg.getSender().getLocalName());
+                    //System.out.println(getLocalName()+": Received response "+msg.getContent()+" from "+msg.getSender().getLocalName());
+                    if (msg.getContent().equals(MainController.STARTROUTE))
+                    {
+                        GetAgent();
+                    }
                 }
                 block();
             }
@@ -63,6 +71,30 @@ public class MasterRoutingAgent extends Agent implements Drawable
         } catch (IOException e) {
             e.printStackTrace();
         }*/
+    }
+
+    @Override
+    public void GetAgent()
+    {
+        try {
+            SearchConstraints c = new SearchConstraints();
+            c.setMaxResults ( new Long(-1) );
+            agents = AMSService.search( this, new AMSAgentDescription(), c );
+        }
+        catch (Exception e)
+        {
+            System.out.println( "Problem searching AMS: " + e );
+            e.printStackTrace();
+        }
+        AID myID = getAID();// this method to get the identity of //agents such as (Name , adress , host ....etc)
+        for (int i=0; i<agents.length;i++)
+        {
+            AID agentID = agents[i].getName();
+            System.out.println(
+                    ( agentID.equals( myID ) ? "*** " : "    ")
+                            + i + ": " + agentID.getName()
+            );
+        }
     }
 
     // Notify that a new node has been created and update the distance matrix
