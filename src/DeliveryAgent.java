@@ -1,7 +1,12 @@
 import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.*;
-import jade.tools.sniffer.Message;
+import javafx.animation.SequentialTransition;
+import javafx.animation.TranslateTransition;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.shape.Circle;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,8 +14,9 @@ import java.util.List;
 public class DeliveryAgent extends Agent implements Drawable
 {
     private List<Node> _route = new ArrayList<Node>();
-    private long _speed = 5;
-    private Position _position = new Position(0, 0);
+    private double _speed = 20;
+    private boolean _isTraveling = false;
+    private Circle _body = null;
 
     protected void setup()
     {
@@ -24,64 +30,70 @@ public class DeliveryAgent extends Agent implements Drawable
                     //Ontology check exists if we need to send different types of messages
                     if(msg.getOntology().equals(MasterRoutingAgent.DELIVERY_ROUTE_ONTOLOGY))
                     {
-                        try {
-                            System.out.println("Delivery route message received!");
-                            MessageObject msgObject = (MessageObject) msg.getContentObject();
-                            _route = msgObject.GetRoute();
-                            System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getX());
-                            System.out.println("Delivery route successfully added!");
-                            //TODO -- Implement FollowRoute() here
-                        } catch (UnreadableException e) {
-                            e.printStackTrace();
+                        if (_isTraveling) {
+                            System.out.println("Got a route, but I'm Travelling! Ignoring...");
+                        } else {
+                            try {
+                                System.out.println("Delivery route message received!");
+                                MessageObject msgObject = (MessageObject) msg.getContentObject();
+                                _route = msgObject.GetRoute();
+                                System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getY());
+                                System.out.println("Delivery route successfully added!");
+                                FollowRoute();
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
             }
         });
+
+        Object[] args = getArguments();
+        _body = (Circle) args[0];
     }
 
     // When this method is called, the delivery agent moves towards its next destination by deltaTime (if it has one)
-    public void FollowRoute(long deltaTime) {
-        if (_route.isEmpty()) {
+    public void FollowRoute() {
+        if (_route.size() == 0 || _body == null) {
             return;
         }
-        Node nextLocation = _route.get(0);
-        // Get the angle of X and Y
-        double deltaX = Math.atan( nextLocation.getY()/nextLocation.getX() );
-        double deltaY = Math.atan( nextLocation.getX()/nextLocation.getY() );
+        _isTraveling = true;
 
-        // Account for how fast the agent will move
-        deltaX *= _speed * deltaTime;
-        deltaY *= _speed * deltaTime;
+        List<TranslateTransition> transitions = new ArrayList<>();
+        for (int i = 0; i < _route.size(); i++) {
+            Node thisNode = _route.get(i);
+            Node nextNode = _route.size() == i + 1 ? _route.get(0) : _route.get(i + 1);
 
-        // If we will arrive at the location (or go too far) then set our position to that location
-        // Otherwise move closer
-        int xCompare = Double.compare(_position.getX(), nextLocation.getX());
-        int yCompare = Double.compare(_position.getY(), nextLocation.getY());
-        int deltaXCompare = Double.compare(_position.getX() + deltaX, nextLocation.getX());
-        int deltaYCompare = Double.compare(_position.getY() + deltaY, nextLocation.getY());
+            double xTransition = nextNode.getX() - thisNode.getX();
+            double yTransition = nextNode.getY() - thisNode.getY();
 
-        if (xCompare != deltaXCompare) {
-            _position.setX(nextLocation.getX());
-        } else {
-            _position.setX(deltaX + _position.getX());
+            double distance = Math.sqrt(Math.pow(xTransition, 2) + Math.pow(yTransition, 2));
+            double seconds = distance / _speed;
+
+            TranslateTransition transition = new TranslateTransition(Duration.seconds(seconds), _body);
+            transition.setByX(xTransition);
+            transition.setByY(yTransition);
+
+            transitions.add(transition);
         }
-
-        if (yCompare != deltaYCompare) {
-            _position.setY(nextLocation.getY());
-        } else {
-            _position.setY(deltaY + _position.getY());
-        }
-
-        // If we have arrived then move onto the next location
-        if (_position.getX() == nextLocation.getX() && _position.getY() == nextLocation.getY()) {
-            _route.remove(0);
+        synchronized (DeliveryAgent.class) {
+            SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[transitions.size()]));
+            sequentialTransition.onFinishedProperty().set(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+                    _isTraveling = false;
+                }
+            });
+            sequentialTransition.play();
         }
     }
 
     @Override
     public void Draw() {
-
+        _route.add(new Node("AS", new Position(100, 100)));
+        _route.add(new Node("AS", new Position(167.24, 98.35)));
+        FollowRoute();
     }
     @Override
     public void GetAgent() {

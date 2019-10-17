@@ -1,3 +1,4 @@
+import java.io.Externalizable;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -13,13 +14,15 @@ import jade.domain.AMSService;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
+import jade.wrapper.AgentController;
 
 public class MasterRoutingAgent extends Agent implements Drawable
 {
     private int _capacity;
-    private Position _position = new Position(0, 0);
+    private Position _position = new Position(100, 100);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
     private List<Node> _allNodes = new ArrayList<Node>();
+    private List<String> _deliveryAgentList = new ArrayList<String>();
     public static final String DELIVERY_ROUTE_ONTOLOGY = "Delivery-route-ontology";
     AMSAgentDescription [] agents = null;
 
@@ -144,28 +147,43 @@ public class MasterRoutingAgent extends Agent implements Drawable
 
     @Override
     public void Draw() {
-        
+        try {
+            SendRoutes();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void SendRoutes() throws IOException {
-        //TODO -- Use JADE controller to get all delivery agent names
-        //TODO -- Iterate though each existing delivery agent to send route to
-        List<Node> testRoute = new ArrayList<Node>();
-        testRoute.add(new Node("testNode", new Position(0, 0)));
+        AMSAgentDescription[] agents = null;
+        try {
+            SearchConstraints c = new SearchConstraints();
+            c.setMaxResults(new Long(-1));
+            agents = AMSService.search(this, new AMSAgentDescription(), c);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
 
-        MessageObject msgObject = new MessageObject();
-        msgObject.SetRoute(testRoute);
+        for (int i = 0; i < agents.length; i++)
+        {
+            List<Node> testRoute = new ArrayList<Node>();
+            testRoute.add(new Node("testNode", _position));
+            testRoute.add(_allNodes.get(0));
 
-        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-        msg.setLanguage("English");
+            MessageObject msgObject = new MessageObject();
+            msgObject.SetRoute(testRoute);
 
-        //TODO -- Define proper ontology
-        msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
+            ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+            msg.setLanguage("English");
 
-        msg.setContentObject(msgObject);
-        msg.addReceiver(new AID("d1", AID.ISLOCALNAME));
+            msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
 
-        send(msg);
+            msg.setContentObject(msgObject);
+            msg.addReceiver(agents[i].getName());
+
+            send(msg);
+        }
     }
     
     //MEANT ONLY FOR TESTING DISTANCE MATRIX
