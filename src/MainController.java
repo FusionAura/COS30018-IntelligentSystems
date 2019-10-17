@@ -1,7 +1,12 @@
+import jade.core.AID;
 import jade.core.Runtime;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
+import jade.core.behaviours.OneShotBehaviour;
+import jade.lang.acl.ACLMessage;
 import jade.wrapper.*;
+
+import jade.wrapper.gateway.JadeGateway;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
@@ -15,8 +20,7 @@ import javafx.stage.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainController extends Application
-{
+public class MainController extends Application {
     @FXML
     public ListView AgentsList;
 
@@ -25,16 +29,17 @@ public class MainController extends Application
     private GUIController _guiController;
     private AgentController _mainAgentController;
     private ContainerController _mainCtrl;
+    public static String STARTROUTE = "START";
+
 
     @Override
-    public void start(Stage primaryStage) throws Exception
-    {
+    public void start(Stage primaryStage) throws Exception {
         //Load GUI
         FXMLLoader loader = new FXMLLoader(getClass().getResource("IntelligentSystems.fxml"));
         Parent root = loader.load(); // must be called before getting the controller!
         _guiController = loader.getController();
         primaryStage.setTitle("Intelligent Systems Agent Program");
-        primaryStage.setScene(new Scene (root));
+        primaryStage.setScene(new Scene(root));
         primaryStage.show();
 
         //Close Button
@@ -46,9 +51,9 @@ public class MainController extends Application
         });
 
         //JADE Startup
-        Runtime rt= Runtime.instance();
+        Runtime rt = Runtime.instance();
         System.out.println(MainController.class.getName() + ": Launching the platform Main Container...");
-        Profile pMain= new ProfileImpl(null, 8888, null);
+        Profile pMain = new ProfileImpl(null, 8888, null);
         //pMain.setParameter(Profile.GUI, "true");
         _mainCtrl = rt.createMainContainer(pMain);
 
@@ -59,20 +64,47 @@ public class MainController extends Application
         _mainAgentController = _mainCtrl.createNewAgent("MasterRoutingAgent", MasterRoutingAgent.class.getName(), new Object[0]);
         _mainAgentController.start();
 
+         /*AID AgentMaster = new AID(_mainAgentController.getName(),false);
+       JadeGateway.execute(new OneShotBehaviour() {
+            @Override
+            public void action() {
+                final ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+
+                msg.addReceiver(AgentMaster);
+                msg.setContent(STARTROUTE);
+                myAgent.send(msg);
+            }
+        });*/
+
+        //MasterRoutingAgent.
+
+        //JadeGateway.
+
         readFromConfigFile();
 
         //Populate GUI ListView
         _guiController.PopulateAgentList();
 
         _guiController.MainClass = this;
-        _guiController.AgentNum.setText(String.valueOf(_guiController.DoList.size()-1));
-
+        _guiController.AgentNum.setText(String.valueOf(_guiController.DoList.size() - 1));
+        try
+        {
+            // Retrieve O2A interface CounterManager1 exposed by the agent to make it activate the counte
+            Drawable o2a = _mainAgentController.getO2AInterface(Drawable.class);
+            o2a.GetAgent();
+        }
+        catch(StaleProxyException e)
+        {
+            e.printStackTrace();
+        }
     }
+
 
     public static void main (String[] args) throws StaleProxyException
     {
         launch(args);
     }
+
 
     private void readFromConfigFile() {
         CSVFileReader reader = new CSVFileReader();

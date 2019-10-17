@@ -83,4 +83,8 @@ public class DeliveryAgent extends Agent implements Drawable
     public void Draw() {
 
     }
+    @Override
+    public void GetAgent() {
+
+    }
 }

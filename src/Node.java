@@ -17,7 +17,10 @@ public class Node implements Drawable, Serializable {
     public void Draw() {
 
     }
+    @Override
+    public void GetAgent() {
 
+    }
     public double getX() {
         return _position.getX();
     }
