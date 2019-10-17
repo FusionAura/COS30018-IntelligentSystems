@@ -3,6 +3,8 @@ import jade.core.behaviours.*;
 import jade.lang.acl.*;
 import javafx.animation.SequentialTransition;
 import javafx.animation.TranslateTransition;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
@@ -13,6 +15,7 @@ public class DeliveryAgent extends Agent implements Drawable
 {
     private List<Node> _route = new ArrayList<Node>();
     private double _speed = 20;
+    private boolean _isTraveling = false;
     private Circle _body = null;
 
     protected void setup()
@@ -27,15 +30,19 @@ public class DeliveryAgent extends Agent implements Drawable
                     //Ontology check exists if we need to send different types of messages
                     if(msg.getOntology().equals(MasterRoutingAgent.DELIVERY_ROUTE_ONTOLOGY))
                     {
-                        try {
-                            System.out.println("Delivery route message received!");
-                            MessageObject msgObject = (MessageObject) msg.getContentObject();
-                            _route = msgObject.GetRoute();
-                            System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getY());
-                            System.out.println("Delivery route successfully added!");
-                            FollowRoute();
-                        } catch (UnreadableException e) {
-                            e.printStackTrace();
+                        if (_isTraveling) {
+                            System.out.println("Got a route, but I'm Travelling! Ignoring...");
+                        } else {
+                            try {
+                                System.out.println("Delivery route message received!");
+                                MessageObject msgObject = (MessageObject) msg.getContentObject();
+                                _route = msgObject.GetRoute();
+                                System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getY());
+                                System.out.println("Delivery route successfully added!");
+                                FollowRoute();
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
@@ -51,6 +58,7 @@ public class DeliveryAgent extends Agent implements Drawable
         if (_route.size() == 0 || _body == null) {
             return;
         }
+        _isTraveling = true;
 
         List<TranslateTransition> transitions = new ArrayList<>();
         for (int i = 0; i < _route.size(); i++) {
@@ -71,6 +79,12 @@ public class DeliveryAgent extends Agent implements Drawable
         }
         synchronized (DeliveryAgent.class) {
             SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[transitions.size()]));
+            sequentialTransition.onFinishedProperty().set(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+                    _isTraveling = false;
+                }
+            });
             sequentialTransition.play();
         }
     }
