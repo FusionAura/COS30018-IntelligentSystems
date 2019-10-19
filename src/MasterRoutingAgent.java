@@ -1,12 +1,9 @@
-import java.io.Externalizable;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import examples.content.sfo.Main;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -15,22 +12,22 @@ import jade.domain.AMSService;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
-import jade.wrapper.AgentController;
 
-public class MasterRoutingAgent extends Agent implements Drawable
+public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInterface
 {
+    public static final String DELIVERY_ROUTE_ONTOLOGY = "delivery-route-ontology";
+    public static String START_ROUTE_ONTOLOGY = "start";
+
     private int _capacity;
     private Position _position = new Position(100, 100);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
     private List<Node> _allNodes = new ArrayList<Node>();
-    private List<String> _deliveryAgentList = new ArrayList<String>();
-    public static final String DELIVERY_ROUTE_ONTOLOGY = "Delivery-route-ontology";
-    AMSAgentDescription [] agents = null;
     
     protected void setup()
     {
         //https://stackoverflow.com/questions/28652869/how-to-get-agents-on-all-containers-jade
-        registerO2AInterface(Drawable.class, this);
+        registerO2AInterface(MasterRoutingAgentInterface.class, this);
+
         // Setting up message listener so that it can recieve messages from other agents
         CyclicBehaviour msgListenBehaviour = new CyclicBehaviour(this)
         {
@@ -41,43 +38,21 @@ public class MasterRoutingAgent extends Agent implements Drawable
                 if(msg!=null)
                 {
                     //System.out.println(getLocalName()+": Received response "+msg.getContent()+" from "+msg.getSender().getLocalName());
-                    if (msg.getContent().equals(MainController.STARTROUTE))
-                    {
-                        GetAgent();
+                    if (msg.getOntology().equals(START_ROUTE_ONTOLOGY)) {
+                        getDeliveryAgents();
                     }
                 }
                 block();
             }
         };
         addBehaviour(msgListenBehaviour);
-
-        // Setting up O2A Communication so that the agent can get objects from the MainController
-        setEnabledO2ACommunication(true, 0);
-        CyclicBehaviour o2aListenBehaviour = new CyclicBehaviour(this) {
-            @Override
-            public void action() {
-                Object newObject = getO2AObject();
-
-                if (newObject != null) {
-                    if (newObject instanceof Node) {
-                        Node newNode = (Node)newObject;
-                        NewNode(newNode);
-                    }
-                }
-            }
-        };
-        addBehaviour(o2aListenBehaviour);
         addBehaviour(new VrpOneShot());
-        /*try {
-            SendRoutes();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
+
+        NewNode(new Node("warehouse", _position));
     }
 
-    @Override
-    public void GetAgent()
-    {
+    private List<AID> getDeliveryAgents() {
+        AMSAgentDescription[] agents;
         try {
             SearchConstraints c = new SearchConstraints();
             c.setMaxResults ( new Long(-1) );
@@ -87,18 +62,22 @@ public class MasterRoutingAgent extends Agent implements Drawable
         {
             System.out.println( "Problem searching AMS: " + e );
             e.printStackTrace();
+            agents = new AMSAgentDescription[]{};
         }
-        AID myID = getAID();// this method to get the identity of //agents such as (Name , adress , host ....etc)
-        for (int i=0; i<agents.length;i++)
-        {
-            AID agentID = agents[i].getName();
-            System.out.println(
-                    ( agentID.equals( myID ) ? "*** " : "    ")
-                            + i + ": " + agentID.getName()
-            );
+        List<AID> deliveryAgents = new ArrayList<>();
+
+        AID myID = getAID(); //This method to get the identity of //agents such as (Name , adress , host ....etc)
+        for (AMSAgentDescription agent : agents) {
+            AID agentID = agent.getName();
+            if (!agentID.equals(myID)) {
+                deliveryAgents.add(agentID);
+            }
         }
+
+        return deliveryAgents;
     }
 
+    @Override
     // Notify that a new node has been created and update the distance matrix
     public synchronized void NewNode(Node newNode) {
         if (_allNodes.contains(newNode)) {
@@ -148,7 +127,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
     }
 
     @Override
-    public void Draw() {
+    public void StartRouting() {
         try {
             SendRoutes();
         } catch (Exception e) {
@@ -156,22 +135,14 @@ public class MasterRoutingAgent extends Agent implements Drawable
         }
     }
 
-    public void SendRoutes() throws IOException {
-        AMSAgentDescription[] agents = null;
-        try {
-            SearchConstraints c = new SearchConstraints();
-            c.setMaxResults(new Long(-1));
-            agents = AMSService.search(this, new AMSAgentDescription(), c);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
+    private void SendRoutes() throws IOException {
+        List<AID> deliveryAgents = getDeliveryAgents();
 
-        for (int i = 0; i < agents.length; i++)
-        {
-            List<Node> testRoute = new ArrayList<Node>();
-            testRoute.add(new Node("testNode", _position));
-            testRoute.add(_allNodes.get(0));
+        //TODO: Generate the routes from the Routing class and send them to each delivery agent
+        //TODO: Loop currently sends one test route to each delivery agent
+
+        for (AID agent : deliveryAgents) {
+            List<Node> testRoute = new ArrayList<Node>(_allNodes);
 
             MessageObject msgObject = new MessageObject();
             msgObject.SetRoute(testRoute);
@@ -182,7 +153,7 @@ public class MasterRoutingAgent extends Agent implements Drawable
             msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
 
             msg.setContentObject(msgObject);
-            msg.addReceiver(agents[i].getName());
+            msg.addReceiver(agent);
 
             send(msg);
         }
@@ -199,16 +170,16 @@ public class MasterRoutingAgent extends Agent implements Drawable
 
         DecimalFormat myFormat = new DecimalFormat("##");
 
-        for (int i = 0; i < masterRoutingAgent.get_distanceMatrix().size(); i++) {
+        for (int i = 0; i < masterRoutingAgent.getDistanceMatrix().size(); i++) {
             System.out.print("[");
-            for (int j = 0; j < masterRoutingAgent.get_distanceMatrix().get(i).size(); j++) {
-                System.out.print(myFormat.format(masterRoutingAgent.get_distanceMatrix().get(i).get(j)) + ", ");
+            for (int j = 0; j < masterRoutingAgent.getDistanceMatrix().get(i).size(); j++) {
+                System.out.print(myFormat.format(masterRoutingAgent.getDistanceMatrix().get(i).get(j)) + ", ");
             }
             System.out.println("]");
         }
     }
 
-    public List<List<Double>> get_distanceMatrix() {
+    public List<List<Double>> getDistanceMatrix() {
         return _distanceMatrix;
     }
 
