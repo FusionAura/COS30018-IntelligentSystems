@@ -75,23 +75,7 @@ public class MainController extends Application {
         _mainAgentController.start();
         //Register Master Routing position
         _guiController.RegisterCircle(new Circle(100, 100, 10, Color.CHOCOLATE));
-
-         /*AID AgentMaster = new AID(_mainAgentController.getName(),false);
-       JadeGateway.execute(new OneShotBehaviour() {
-            @Override
-            public void action() {
-                final ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-
-                msg.addReceiver(AgentMaster);
-                msg.setContent(STARTROUTE);
-                myAgent.send(msg);
-            }
-        });*/
-
-        //MasterRoutingAgent.
-
-        //JadeGateway.
-
+        
         readFromConfigFile();
 
         //Populate GUI ListView
