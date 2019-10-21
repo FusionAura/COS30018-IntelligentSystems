@@ -17,7 +17,7 @@ with constraints.
 public class Routing {
 
     static class DataModel {
-        public final double[][] distanceMatrix = {
+        public static final double[][] distanceMatrix = {
                 {0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354, 468, 776, 662},
                 {548, 0, 684, 308, 194, 502, 730, 354, 696, 742, 1084, 594, 480, 674, 1016, 868, 1210},
                 {776, 684, 0, 992, 878, 502, 274, 810, 468, 742, 400, 1278, 1164, 1130, 788, 1552, 754},
