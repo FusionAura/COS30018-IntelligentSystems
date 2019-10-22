@@ -11,10 +11,7 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class DeliveryAgent extends Agent implements Drawable
+public class DeliveryAgent extends Agent
 {
     private List<Node> _route = new ArrayList<Node>();
     private double _speed = 20;
@@ -90,16 +87,5 @@ public class DeliveryAgent extends Agent implements Drawable
             });
             sequentialTransition.play();
         }
-    }
-
-    @Override
-    public void Draw() {
-        _route.add(new Node("AS", new Position(100, 100)));
-        _route.add(new Node("AS", new Position(167.24, 98.35)));
-        FollowRoute();
-    }
-    @Override
-    public void GetAgent() {
-
     }
 }

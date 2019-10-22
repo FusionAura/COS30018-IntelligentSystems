@@ -1,16 +1,11 @@
-import jade.core.AID;
 import jade.core.Runtime;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
-import jade.core.behaviours.OneShotBehaviour;
-import jade.lang.acl.ACLMessage;
 import jade.wrapper.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import jade.wrapper.gateway.JadeGateway;
 import javafx.application.Application;
-import javafx.scene.Group;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 import javafx.scene.paint.Color;
@@ -22,19 +17,15 @@ import javafx.scene.shape.*;
 import javafx.event.EventHandler;
 import javafx.stage.WindowEvent;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MainController extends Application {
     @FXML
-    public ListView AgentsList;
+    public ListView _agentList;
 
     private List<Node> _nodes = new ArrayList<>();
     private List<Parcel> _parcels = new ArrayList<>();
     private GUIController _guiController;
     private AgentController _mainAgentController;
     private ContainerController _mainCtrl;
-    public static String STARTROUTE = "START";
 
 
     private Color[] _deliveryColors = {
@@ -84,46 +75,19 @@ public class MainController extends Application {
         _mainAgentController.start();
         //Register Master Routing position
         _guiController.RegisterCircle(new Circle(100, 100, 10, Color.CHOCOLATE));
-
-         /*AID AgentMaster = new AID(_mainAgentController.getName(),false);
-       JadeGateway.execute(new OneShotBehaviour() {
-            @Override
-            public void action() {
-                final ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-
-                msg.addReceiver(AgentMaster);
-                msg.setContent(STARTROUTE);
-                myAgent.send(msg);
-            }
-        });*/
-
-        //MasterRoutingAgent.
-
-        //JadeGateway.
-
+        
         readFromConfigFile();
 
         //Populate GUI ListView
         _guiController.PopulateAgentList();
         
         _guiController.MainClass = this;
-        try
-        {
-            // Retrieve O2A interface CounterManager1 exposed by the agent to make it activate the counte
-            Drawable o2a = _mainAgentController.getO2AInterface(Drawable.class);
-            o2a.GetAgent();
-        }
-        catch(StaleProxyException e) {
-            _guiController.AgentNum.setText(String.valueOf(_guiController.DoList.size() - 1));
-            _guiController.scene = primaryStage.getScene();
-        }
-
     }
 
     public void runAction() {
         try {
-            Drawable drawable = _mainAgentController.getO2AInterface(Drawable.class);
-            drawable.Draw();
+            MasterRoutingAgentInterface masterRoutingAgentInterface = _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class);
+            masterRoutingAgentInterface.StartRouting();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -178,7 +142,7 @@ public class MainController extends Application {
                     _nodes.add(node);
 
                     try {
-                        _mainAgentController.putO2AObject(node, false);
+                        _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class).NewNode(node);
                     } catch (StaleProxyException e) {
                         e.printStackTrace();
                     }
