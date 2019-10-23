@@ -53,7 +53,7 @@ public class Routing {
         public double routeCost;
         public Routes()
         {
-
+            route = new ArrayList<>();
         }
         public Routes(int pId, int pStartingLoc)
         {
@@ -251,13 +251,13 @@ public class Routing {
         DataModel data = new DataModel();
         //initialize RouteManager List wiht 3 new Routes, add depot as first route location
         List<Routes> RouteManager = new ArrayList<>();
-//        for (int i =0; i< 3; i++)
-//        {
-//            Routes temp = new Routes();
-//            temp.vehicleID = i;
-//            temp.route.add(0,0);
-//            RouteManager.add(temp);
-//        }
+        for (int i =0; i< 3; i++)
+        {
+            Routes temp = new Routes();
+            temp.vehicleID = i;
+            temp.route.add(0,0);
+            RouteManager.add(temp);
+        }
         List<Integer> testLoc = new ArrayList<>();
         testLoc.add(0);
         testLoc.add(0);
@@ -271,11 +271,13 @@ public class Routing {
         List<Integer> test = BestNext(testLoc, testDomain, data);
         for (int i = 0; i < test.size(); i++) {
             System.out.println(test.get(i));
-            //UpdateRouteManager(RouteManager, i, test.get(i), data);
+            UpdateRouteManager(RouteManager, i, test.get(i), data);
+            System.out.println("RM:"+i+RouteManager.get(i).route + " : "+RouteManager.get(i).routeCost);
         }
 
         //our Main Search Loop
         /*
+
             while (vehicleLoad>0 && daomin.size()>0)
                 finished searching?
                     BestNext set of next locations each vehicle goes to
