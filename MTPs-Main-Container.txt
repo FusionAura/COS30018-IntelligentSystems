@@ -1,1 +1,1 @@
-http://Hung:7778/acc
+http://PC.gateway:7778/acc

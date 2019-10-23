@@ -137,12 +137,18 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
 
     private void SendRoutes() throws IOException {
         List<AID> deliveryAgents = getDeliveryAgents();
+        List<Routing.Routes> newRoute;
+        Routing VRPRoute = new Routing();
 
         //TODO: Generate the routes from the Routing class and send them to each delivery agent
         //TODO: Loop currently sends one test route to each delivery agent
 
+        newRoute = VRPRoute.VRP();
+
         for (AID agent : deliveryAgents) {
             List<Node> testRoute = new ArrayList<Node>(_allNodes);
+
+
 
             MessageObject msgObject = new MessageObject();
             msgObject.SetRoute(testRoute);
@@ -154,6 +160,9 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
 
             msg.setContentObject(msgObject);
             msg.addReceiver(agent);
+
+
+
 
             send(msg);
         }
