@@ -1,3 +1,4 @@
+import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,137 +40,130 @@ public class Routing {
         public final int vehicleNumber = 3;
         //demand of each node 0 for 0 as that is our depot, and 1 for every other node location because we want to visit
         //them once only
-        public List<Integer> demands = Arrays.asList(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
+        public List<Integer> demands = Arrays.asList(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         //vehicle capacity not extending weight yet
-        public final int[] vehicleCapacities = {6,6,6};
+        public final int[] vehicleCapacities = {6, 6, 6};
         public final int depot = 0;
         public final int packages = this.distanceMatrix.length;
     }
 
-    static class Routes
-    {
+    static class Routes {
         public int vehicleID;
         public List<Integer> route;
         public double routeCost;
         public Routes()
         {
+
+        }
+        public Routes(int pId, int pStartingLoc)
+        {
+            vehicleID = pId;
+            route.add(pStartingLoc);
         }
     }
 
-    public static List<Routes> VRP()
-    {
-        List<Routes> RoutingManager = new ArrayList<>();
-        DataModel data = new DataModel();
-        //get the ideal best route fastest route considering packages total / car total
-        //vehicles must return to depot thus extra distance added at the end
-        double bestPath = 0;
-        //long to truncate round down
-        //should check load fits vehicleCap leaving it out for now
-        //while loop while there is still demands = 1 meaning parcels to deliver
-        int currentVehicle = 0;
-        int test = 3;
-        //Searching loop start
-        while (test>0)
-        {
-            //creating/initializing vars to be used for our search
-            Routes route = new Routes();
-            boolean found = false;
-            List<Integer> currentRoute = new ArrayList<>();
-            currentRoute.clear();
-            //starting point of Routes == depot
-            currentRoute.add(0);
-            List<Integer> locations = new ArrayList<>();
-            //get the locations with demands (visit once)
-            //data.demands index = location index, value = (0,1) for delivery required
-            //converting to locations.list values contains location index
-            for (int d = 0; d < data.demands.size(); d++)
-            {
-//                System.out.println("Add Loc:"+d + " demands:"+data.demands.get(d));
-                //for every
-                if (data.demands.get(d) == 1)
-                {
-                    locations.add(d);
-                }
-            }
-            //loop to add routes while locations to delivery >0
-            while (!found && (locations.size()>0))
-            {
-                //double to hold our cost
-                double currentCost = 0;
-                //determining amount of packages a car holds going from least necessary to most by using truncation math.floor
-                if (data.vehicleNumber*data.vehicleCapacities[0] < data.packages)
-                    System.out.println("Capacity < parcels to delivery in 1 run"+ RoutingManager.size());
-                //int load = (int)Math.floor(parcels/data.vehicleNumber);
-                //using simple load=6 debugging
-                int load = data.vehicleCapacities[currentVehicle];
-                if (load> data.vehicleCapacities[currentVehicle])
-                    System.out.println("Load Error , above car capacity:"+load +data.vehicleCapacities[currentVehicle]);
-                //load is used to loop vehicle routing incase load>location size
-                if (locations.size() < load)
-                    load = locations.size();
-                //current base just gets the shortest route until capacity reached a multi travelling salesmen approach
-                //for testing
-                //loop to find a route for load number of times
-                for(int i = 0; i < load; i++)
-                {
-                    int bestJ=0;
-                    double bestCost = 999999;
-                    if (locations.size()>0)
-                    {
-                        //get the lowest cost path form the last entry to currentRoute (current location)
-                        for (int j = 0; j < locations.size(); j++)
-                        {
-                            double current = data.distanceMatrix[currentRoute.get(currentRoute.size()-1)][locations.get(j)];
-                            if (current < bestCost)
-                            {
-                                bestCost = current;
-                                bestJ = locations.get(j);
-                            }
-                        }
-                    }
-                    currentRoute.add(bestJ);
-                    currentCost += bestCost;
-//                    System.out.println("Appending:"+bestJ+ " total:"+currentCost + " removing Loc:"+locations.indexOf(bestJ));
-//                    System.out.println("CRsize:"+currentRoute.size() + " load:"+i);
-                    locations.remove(locations.indexOf(bestJ));
-//                    System.out.println(locations.size()+"locSize");
-                }
-                //check that the search is complete
-                if (currentRoute.size()== load+1 || currentRoute.size() == locations.size())
-                {
-                    //must return to depot so add this into routing and costs
-                    currentCost += data.distanceMatrix[currentRoute.get(currentRoute.size()-1)][0];
-                    currentRoute.add(0);
-//                    System.out.println("Loading data%ncar:"+currentVehicle+"%nRoute:"+currentRoute+ "%nCost:"+currentCost);
-                    //update Route class
-                    route.vehicleID = currentVehicle;
-                    route.routeCost = currentCost;
-                    route.route = currentRoute;
-                    //Update demands set demands index of route elements to 0
-                    for (int k = 0; k<currentRoute.size(); k++)
-                    {
-//                        System.out.println("cRk:"+currentRoute.get(k)+ " demandsK:"+data.demands.get(currentRoute.get(k)));
-                        data.demands.set(currentRoute.get(k),0);
-                    }
-                    //update vars for while(demands) loop
-                    if (currentVehicle < 3)
-                        currentVehicle++;
-                    //break route loop
-                    found = true;
-                }
-            }
-            RoutingManager.add(route);
-            //placeholder var to run our search loop 3 times for simplicity
-            test--;
-        }
-        return RoutingManager;
-    }
+//    public static List<Routes> VRP() {
+//        List<Routes> RoutingManager = new ArrayList<>();
+//        DataModel data = new DataModel();
+//        //get the ideal best route fastest route considering packages total / car total
+//        //vehicles must return to depot thus extra distance added at the end
+//        double bestPath = 0;
+//        //long to truncate round down
+//        //should check load fits vehicleCap leaving it out for now
+//        //while loop while there is still demands = 1 meaning parcels to deliver
+//        int currentVehicle = 0;
+//        int test = 3;
+//        //Searching loop start
+//        while (test > 0) {
+//            //creating/initializing vars to be used for our search
+//            Routes route = new Routes();
+//            boolean found = false;
+//            List<Integer> currentRoute = new ArrayList<>();
+//            currentRoute.clear();
+//            //starting point of Routes == depot
+//            currentRoute.add(0);
+//            List<Integer> locations = new ArrayList<>();
+//            //get the locations with demands (visit once)
+//            //data.demands index = location index, value = (0,1) for delivery required
+//            //converting to locations.list values contains location index
+//            for (int d = 0; d < data.demands.size(); d++) {
+////                System.out.println("Add Loc:"+d + " demands:"+data.demands.get(d));
+//                //for every
+//                if (data.demands.get(d) == 1) {
+//                    locations.add(d);
+//                }
+//            }
+//            //loop to add routes while locations to delivery >0
+//            while (!found && (locations.size() > 0)) {
+//                //double to hold our cost
+//                double currentCost = 0;
+//                //determining amount of packages a car holds going from least necessary to most by using truncation math.floor
+//                if (data.vehicleNumber * data.vehicleCapacities[0] < data.packages)
+//                    System.out.println("Capacity < parcels to delivery in 1 run" + RoutingManager.size());
+//                //int load = (int)Math.floor(parcels/data.vehicleNumber);
+//                //using simple load=6 debugging
+//                int load = data.vehicleCapacities[currentVehicle];
+//                if (load > data.vehicleCapacities[currentVehicle])
+//                    System.out.println("Load Error , above car capacity:" + load + data.vehicleCapacities[currentVehicle]);
+//                //load is used to loop vehicle routing incase load>location size
+//                if (locations.size() < load)
+//                    load = locations.size();
+//                //current base just gets the shortest route until capacity reached a multi travelling salesmen approach
+//                //for testing
+//                //loop to find a route for load number of times
+//                for (int i = 0; i < load; i++) {
+//                    int bestJ = 0;
+//                    double bestCost = 999999;
+//                    if (locations.size() > 0) {
+//                        //get the lowest cost path form the last entry to currentRoute (current location)
+//                        for (int j = 0; j < locations.size(); j++) {
+//                            double current = data.distanceMatrix[currentRoute.get(currentRoute.size() - 1)][locations.get(j)];
+//                            if (current < bestCost) {
+//                                bestCost = current;
+//                                bestJ = locations.get(j);
+//                            }
+//                        }
+//                    }
+//                    currentRoute.add(bestJ);
+//                    currentCost += bestCost;
+////                    System.out.println("Appending:"+bestJ+ " total:"+currentCost + " removing Loc:"+locations.indexOf(bestJ));
+////                    System.out.println("CRsize:"+currentRoute.size() + " load:"+i);
+//                    locations.remove(locations.indexOf(bestJ));
+////                    System.out.println(locations.size()+"locSize");
+//                }
+//                //check that the search is complete
+//                if (currentRoute.size() == load + 1 || currentRoute.size() == locations.size()) {
+//                    //must return to depot so add this into routing and costs
+//                    currentCost += data.distanceMatrix[currentRoute.get(currentRoute.size() - 1)][0];
+//                    currentRoute.add(0);
+////                    System.out.println("Loading data%ncar:"+currentVehicle+"%nRoute:"+currentRoute+ "%nCost:"+currentCost);
+//                    //update Route class
+//                    route.vehicleID = currentVehicle;
+//                    route.routeCost = currentCost;
+//                    route.route = currentRoute;
+//                    //Update demands set demands index of route elements to 0
+//                    for (int k = 0; k < currentRoute.size(); k++) {
+////                        System.out.println("cRk:"+currentRoute.get(k)+ " demandsK:"+data.demands.get(currentRoute.get(k)));
+//                        data.demands.set(currentRoute.get(k), 0);
+//                    }
+//                    //update vars for while(demands) loop
+//                    if (currentVehicle < 3)
+//                        currentVehicle++;
+//                    //break route loop
+//                    found = true;
+//                }
+//            }
+//            RoutingManager.add(route);
+//            //placeholder var to run our search loop 3 times for simplicity
+//            test--;
+//        }
+//        return RoutingManager;
+//    }
 
     //find the bestPath assign to appropriate vehicles based on their position, if all same priotitize index 0->x
     //consideration to remove DataModel from param for performance.
     //pLoc = current vehicle locations, pDomain = nodes to visit/deliver
-    public static List<Integer> BestNext(List<Integer> pLoc, List<Integer> pDomain, DataModel pData)
-    {
+    public static List<Integer> BestNext(List<Integer> pLoc, List<Integer> pDomain, DataModel pData) {
         //index = vehicle id , value = new location
         List<Integer> returnLocs = new ArrayList<>();
         returnLocs.add(null);
@@ -178,10 +172,12 @@ public class Routing {
         List<Integer> bestLocs = new ArrayList<>();
         List<Double> bestCosts = new ArrayList<>();
         boolean found = false;
-        while (!found) {
+        while (!found)
+        {
             //clear theste 2 lists to be searched again when 1 location is selected
             bestLocs.clear();
             bestCosts.clear();
+            System.out.println("Clear");
             //vehicleNum instead of 3 later
             for (int i = 0; i < 3; i++) {
                 //what needs to be found == returnLocs == null
@@ -191,35 +187,46 @@ public class Routing {
                     int bestJ = 0;
                     double bestCost = 999999;
                     //get the lowest cost path form the last entry to currentRoute (current location)
-                    for (int j = 0; j < pLoc.size(); j++) {
+                    for (int j = 0; j < pDomain.size(); j++) {
                         //current loc of any driver should not be in pDomain as it is visited, besides 0
                         double current = pData.distanceMatrix[pLoc.get(i)][pDomain.get(j)];
                         if (current < bestCost) {
                             bestCost = current;
-                            bestJ = pLoc.get(j);
+                            bestJ = pDomain.get(j);
                         }
                     }
                     //add i index bestJ and Cost as there wont always have 3 sizes to match index to vehicle numbers otherwise
                     bestLocs.add(i, bestJ);
                     bestCosts.add(i, bestCost);
                 }
+                //trying to debug out of bounds
+                else
+                {
+                    bestLocs.add(i,null);
+                    bestCosts.add(i,null);
+                }
             }
-            System.out.println("add else");
+            System.out.println("SampleSize:");
+            for (int i = 0; i< bestLocs.size(); i++)
+            {
+                System.out.println("loc:"+bestLocs.get(i));
+                System.out.println(("costs:"+bestCosts.get(i)));
+            }
+            System.out.println("add");
             int bestIndex = 0;
             double bestCost = 999999;
             for (int i = 0; i < bestCosts.size(); i++) {
-                if (bestCosts.get(i) < bestCost) {
-                    bestIndex = i;
-                    bestCost = bestCosts.get(i);
+                if (bestCosts.get(i) != null)
+                {
+                    if (bestCosts.get(i) < bestCost) {
+                        bestIndex = i;
+                        bestCost = bestCosts.get(i);
+                    }
                 }
             }
             System.out.println("bestI:" + bestIndex + " bestCost:" + bestCost);
             returnLocs.set(bestIndex, bestLocs.get(bestIndex));
-            //remove from pDomain the location selected
             pDomain.remove(bestLocs.get(bestIndex));
-            //Update pdata distance matrix the new location of a vehicle for our neighbouring vehicle deterence values
-            //here
-            
             //returnLocs contain 3 non null locations to return found = true
             if (returnLocs.contains(null) != true)
                 found = true;
@@ -227,8 +234,14 @@ public class Routing {
         return returnLocs;
     }
 
-    public static void main(String [] args)
-    {
+    //adds routeCost from last to new loc, add route(pNewLoc)
+    public static void UpdateRouteManager(List<Routes> pRM, Integer pI, Integer pNewLoc, DataModel pData) {
+        //update routeCost from current last routeindex to pNewLoc
+        pRM.get(pI).routeCost += pData.distanceMatrix[pRM.get(pI).route.size() - 1][pNewLoc];
+        pRM.get(pI).route.add(pNewLoc);
+    }
+
+    public static void main(String[] args) {
 
 //        List<Routes> RoutingManager = VRP();
 //        for(int i =0; i<RoutingManager.size(); i++)
@@ -236,22 +249,37 @@ public class Routing {
 //            System.out.println("Vehicle:"+i +"%nPathing to:"+RoutingManager.get(i).route+"%nDistance:"+RoutingManager.get(i).routeCost);
 //        }
         DataModel data = new DataModel();
+        //initialize RouteManager List wiht 3 new Routes, add depot as first route location
+        List<Routes> RouteManager = new ArrayList<>();
+//        for (int i =0; i< 3; i++)
+//        {
+//            Routes temp = new Routes();
+//            temp.vehicleID = i;
+//            temp.route.add(0,0);
+//            RouteManager.add(temp);
+//        }
         List<Integer> testLoc = new ArrayList<>();
         testLoc.add(0);
-        testLoc.add(7);
-        testLoc.add(4);
+        testLoc.add(0);
+        testLoc.add(0);
         List<Integer> testDomain = new ArrayList<>();
-        for(int i = 0; i< data.demands.size();i++)
-        {
-            if (data.demands.get(i) == 1)
-            {
+        for (int i = 0; i < data.demands.size(); i++) {
+            if (data.demands.get(i) == 1) {
                 testDomain.add(i);
             }
         }
         List<Integer> test = BestNext(testLoc, testDomain, data);
-        for (int i = 0; i< test.size(); i++)
-        {
+        for (int i = 0; i < test.size(); i++) {
             System.out.println(test.get(i));
+            //UpdateRouteManager(RouteManager, i, test.get(i), data);
         }
+
+        //our Main Search Loop
+        /*
+            while (vehicleLoad>0 && daomin.size()>0)
+                finished searching?
+                    BestNext set of next locations each vehicle goes to
+                        update vehicle location and data, mainly distance matrix based on neighbouring car deterences etc.
+         */
     }
 }
