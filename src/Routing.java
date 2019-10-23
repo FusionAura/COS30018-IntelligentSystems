@@ -165,13 +165,93 @@ public class Routing {
         return RoutingManager;
     }
 
+    //find the bestPath assign to appropriate vehicles based on their position, if all same priotitize index 0->x
+    //consideration to remove DataModel from param for performance.
+    //pLoc = current vehicle locations, pDomain = nodes to visit/deliver
+    public static List<Integer> BestNext(List<Integer> pLoc, List<Integer> pDomain, DataModel pData)
+    {
+        //index = vehicle id , value = new location
+        List<Integer> returnLocs = new ArrayList<>();
+        returnLocs.add(null);
+        returnLocs.add(null);
+        returnLocs.add(null);
+        List<Integer> bestLocs = new ArrayList<>();
+        List<Double> bestCosts = new ArrayList<>();
+        boolean found = false;
+        while (!found) {
+            //clear theste 2 lists to be searched again when 1 location is selected
+            bestLocs.clear();
+            bestCosts.clear();
+            //vehicleNum instead of 3 later
+            for (int i = 0; i < 3; i++) {
+                //what needs to be found == returnLocs == null
+                //vehicle index i == null. search for it
+                if (returnLocs.get(i) == null) {
+                    System.out.println(returnLocs.get(i) + " reloc:" + i);
+                    int bestJ = 0;
+                    double bestCost = 999999;
+                    //get the lowest cost path form the last entry to currentRoute (current location)
+                    for (int j = 0; j < pLoc.size(); j++) {
+                        //current loc of any driver should not be in pDomain as it is visited, besides 0
+                        double current = pData.distanceMatrix[pLoc.get(i)][pDomain.get(j)];
+                        if (current < bestCost) {
+                            bestCost = current;
+                            bestJ = pLoc.get(j);
+                        }
+                    }
+                    //add i index bestJ and Cost as there wont always have 3 sizes to match index to vehicle numbers otherwise
+                    bestLocs.add(i, bestJ);
+                    bestCosts.add(i, bestCost);
+                }
+            }
+            System.out.println("add else");
+            int bestIndex = 0;
+            double bestCost = 999999;
+            for (int i = 0; i < bestCosts.size(); i++) {
+                if (bestCosts.get(i) < bestCost) {
+                    bestIndex = i;
+                    bestCost = bestCosts.get(i);
+                }
+            }
+            System.out.println("bestI:" + bestIndex + " bestCost:" + bestCost);
+            returnLocs.set(bestIndex, bestLocs.get(bestIndex));
+            //remove from pDomain the location selected
+            pDomain.remove(bestLocs.get(bestIndex));
+            //Update pdata distance matrix the new location of a vehicle for our neighbouring vehicle deterence values
+            //here
+            
+            //returnLocs contain 3 non null locations to return found = true
+            if (returnLocs.contains(null) != true)
+                found = true;
+        }
+        return returnLocs;
+    }
+
     public static void main(String [] args)
     {
 
-        List<Routes> RoutingManager = VRP();
-        for(int i =0; i<RoutingManager.size(); i++)
+//        List<Routes> RoutingManager = VRP();
+//        for(int i =0; i<RoutingManager.size(); i++)
+//        {
+//            System.out.println("Vehicle:"+i +"%nPathing to:"+RoutingManager.get(i).route+"%nDistance:"+RoutingManager.get(i).routeCost);
+//        }
+        DataModel data = new DataModel();
+        List<Integer> testLoc = new ArrayList<>();
+        testLoc.add(0);
+        testLoc.add(7);
+        testLoc.add(4);
+        List<Integer> testDomain = new ArrayList<>();
+        for(int i = 0; i< data.demands.size();i++)
         {
-            System.out.println("Vehicle:"+i +"%nPathing to:"+RoutingManager.get(i).route+"%nDistance:"+RoutingManager.get(i).routeCost);
+            if (data.demands.get(i) == 1)
+            {
+                testDomain.add(i);
+            }
+        }
+        List<Integer> test = BestNext(testLoc, testDomain, data);
+        for (int i = 0; i< test.size(); i++)
+        {
+            System.out.println(test.get(i));
         }
     }
 }
