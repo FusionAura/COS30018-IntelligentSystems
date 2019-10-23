@@ -42,8 +42,9 @@ public class Routing {
         //them once only
         public List<Integer> demands = Arrays.asList(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         //vehicle capacity not extending weight yet
-        public final int[] vehicleCapacities = {6, 6, 6};
+        public final int[] vehicleCapacities = {300, 300, 300};
         public final int depot = 0;
+        public final int[] parcelWeight = {0,75,50,20,40,15,90,25,42,22,48,18,32,15,100,70,42};
         public final int packages = this.distanceMatrix.length;
     }
 
@@ -179,7 +180,8 @@ public class Routing {
             bestCosts.clear();
             System.out.println("Clear");
             //vehicleNum instead of 3 later
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < pLoc.size(); i++)
+            {
                 //what needs to be found == returnLocs == null
                 //vehicle index i == null. search for it
                 if (returnLocs.get(i) == null) {
@@ -187,7 +189,22 @@ public class Routing {
                     int bestJ = 0;
                     double bestCost = 999999;
                     //get the lowest cost path form the last entry to currentRoute (current location)
-                    for (int j = 0; j < pDomain.size(); j++) {
+                    //Weight constraint check to refine our domain space to pick
+                    List<Integer> domain = new ArrayList<>();
+                    domain.addAll(pDomain);
+                    for(int d = 0; d<domain.size();d++)
+                    {
+                        System.out.println("pDomain:"+pDomain.get(d));
+                        //parcel weight in the domain > vehicle capacity
+                        if(pData.vehicleCapacities[i] < pData.parcelWeight[domain.get(d)])
+                        {
+                            //remove it from the search domain
+                            System.out.println("load:"+pData.vehicleCapacities[i] +" parcelWeight:"+pData.parcelWeight[domain.get(d)]);
+                            System.out.println("removing domain:"+domain.get(d));
+                            domain.remove(d);
+                        }
+                    }
+                    for (int j = 0; j < domain.size(); j++) {
                         //current loc of any driver should not be in pDomain as it is visited, besides 0
                         double current = pData.distanceMatrix[pLoc.get(i)][pDomain.get(j)];
                         if (current < bestCost) {
@@ -199,7 +216,7 @@ public class Routing {
                     bestLocs.add(i, bestJ);
                     bestCosts.add(i, bestCost);
                 }
-                //trying to debug out of bounds
+                // LocsReturn i has a path already set Locs/Costs i to null to ignore later
                 else
                 {
                     bestLocs.add(i,null);
@@ -214,7 +231,7 @@ public class Routing {
             }
             System.out.println("add");
             int bestIndex = 0;
-            double bestCost = 999999;
+            double bestCost = 99999;
             for (int i = 0; i < bestCosts.size(); i++) {
                 if (bestCosts.get(i) != null)
                 {
@@ -227,8 +244,12 @@ public class Routing {
             System.out.println("bestI:" + bestIndex + " bestCost:" + bestCost);
             returnLocs.set(bestIndex, bestLocs.get(bestIndex));
             pDomain.remove(bestLocs.get(bestIndex));
+            pData.demands.set(bestLocs.get(bestIndex),0);
+            //update vehicle capacity -+ parcelWeight
+            pData.vehicleCapacities[bestIndex] -= pData.parcelWeight[bestLocs.get(bestIndex)];
             //returnLocs contain 3 non null locations to return found = true
-            if (returnLocs.contains(null) != true)
+            System.out.println("pDomSize:"+pDomain.size());
+            if (returnLocs.contains(null) != true || pDomain.size() == 0)
                 found = true;
         }
         return returnLocs;
@@ -268,20 +289,40 @@ public class Routing {
                 testDomain.add(i);
             }
         }
-        List<Integer> test = BestNext(testLoc, testDomain, data);
-        for (int i = 0; i < test.size(); i++) {
-            System.out.println(test.get(i));
-            UpdateRouteManager(RouteManager, i, test.get(i), data);
-            System.out.println("RM:"+i+RouteManager.get(i).route + " : "+RouteManager.get(i).routeCost);
+//        List<Integer> test = BestNext(testLoc, testDomain, data);
+//        for (int i = 0; i < test.size(); i++) {
+//            System.out.println(test.get(i));
+//            UpdateRouteManager(RouteManager, i, test.get(i), data);
+//            System.out.println("RM:"+i+RouteManager.get(i).route + " : "+RouteManager.get(i).routeCost);
+//        }
+        while (data.demands.contains(1))
+        {
+            for (int i = 0; i < data.demands.size(); i++) {
+                if (data.demands.get(i) == 1) {
+                    System.out.println("demands:"+i);
+                }
+            }
+            List<Integer> test = BestNext(testLoc, testDomain, data);
+            for (int i = 0; i < test.size(); i++) {
+                if (test.get(i) != null)
+                {
+                    UpdateRouteManager(RouteManager, i, test.get(i), data);
+                }
+            }
         }
-
+        for (int i = 0; i < RouteManager.size();i++)
+        {
+            System.out.println("RM:"+i+ RouteManager.get(i).route+ " : "+ RouteManager.get(i).routeCost+ " remainingLoad:"+data.vehicleCapacities[i]);
+        }
         //our Main Search Loop
         /*
 
             while (vehicleLoad>0 && daomin.size()>0)
-                finished searching?
+                !finished searching?
                     BestNext set of next locations each vehicle goes to
+                        use Weight to shrink domain space for each vehicle
                         update vehicle location and data, mainly distance matrix based on neighbouring car deterences etc.
+                        find best cost loc for each vehicle
          */
     }
 }
