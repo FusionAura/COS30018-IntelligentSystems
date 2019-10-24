@@ -161,6 +161,22 @@ public class Routing {
 //        return RoutingManager;
 //    }
 
+    //Neighbouring Location identifier
+    public static  List<Integer> NegativeDomain(double pRange, DataModel pData, List<Integer> pDomain , Integer pLoc)
+    {
+        List<Integer> negativeDomain = new ArrayList<>();
+        for (int i = 0; i< pDomain.size();i++)
+        {
+            if (pData.distanceMatrix[pLoc][pDomain.get(i)] < pRange)
+            {
+                negativeDomain.add(pDomain.get(i));
+            }
+        }
+        return negativeDomain;
+    }
+
+
+
     //find the bestPath assign to appropriate vehicles based on their position, if all same priotitize index 0->x
     //consideration to remove DataModel from param for performance.
     //pLoc = current vehicle locations, pDomain = nodes to visit/deliver
@@ -172,16 +188,23 @@ public class Routing {
         returnLocs.add(null);
         List<Integer> bestLocs = new ArrayList<>();
         List<Double> bestCosts = new ArrayList<>();
+        List<List<Integer>> negativeDomain = new ArrayList<>();
         boolean found = false;
         while (!found)
         {
             //clear theste 2 lists to be searched again when 1 location is selected
+            negativeDomain.clear();
             bestLocs.clear();
             bestCosts.clear();
             System.out.println("Clear");
             //vehicleNum instead of 3 later
             for (int i = 0; i < pLoc.size(); i++)
             {
+                //generate negativeDomains for each vehicle
+                negativeDomain.add(i,NegativeDomain(400, pData, pDomain, pLoc.get(i)));
+                for(int d = 0; d<negativeDomain.size();d++) {
+                    System.out.println("nDom:"+d+" at:"+pLoc.get(d) + negativeDomain.get(d));
+                }
                 //what needs to be found == returnLocs == null
                 //vehicle index i == null. search for it
                 if (returnLocs.get(i) == null) {
@@ -206,7 +229,20 @@ public class Routing {
                     }
                     for (int j = 0; j < domain.size(); j++) {
                         //current loc of any driver should not be in pDomain as it is visited, besides 0
-                        double current = pData.distanceMatrix[pLoc.get(i)][pDomain.get(j)];
+                        double current = pData.distanceMatrix[pLoc.get(i)][domain.get(j)];
+                        //add in negativeDomain effects
+                        for (int n =0; n< negativeDomain.size();n++)
+                        {
+                            //not ur own negativeDomain
+                            if (n!=i)
+                            {
+                                if (negativeDomain.get(n).contains(domain.get(j)))
+                                {
+                                    System.out.println("negativeDomain increase:"+n+ " domJ:"+domain.get(j));
+                                    current += 200;
+                                }
+                            }
+                        }
                         if (current < bestCost) {
                             bestCost = current;
                             bestJ = pDomain.get(j);
@@ -246,6 +282,8 @@ public class Routing {
             returnLocs.set(bestIndex, bestLocs.get(bestIndex));
             pDomain.remove(bestLocs.get(bestIndex));
             pData.demands.set(bestLocs.get(bestIndex),0);
+            //Update pLoc for negativeDomain
+            pLoc.set(bestIndex,bestLocs.get(bestIndex));
             //update vehicle capacity -+ parcelWeight
             pData.vehicleCapacities[bestIndex] -= pData.parcelWeight[bestLocs.get(bestIndex)];
             //returnLocs contain 3 non null locations to return found = true
