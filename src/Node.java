@@ -3,7 +3,7 @@ import javafx.scene.shape.Circle;
 
 import java.io.Serializable;
 
-public class Node implements Drawable, Serializable {
+public class Node implements Serializable {
     private String _name;
     private Position _position;
 
@@ -13,15 +13,6 @@ public class Node implements Drawable, Serializable {
     }
     public boolean isAddress(String address) {
         return address.equals(_name);
-    }
-
-    @Override
-    public void Draw() {
-
-    }
-
-    @Override
-    public void GetAgent() {
     }
   
     public Circle getBody() {

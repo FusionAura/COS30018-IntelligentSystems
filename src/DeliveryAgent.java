@@ -11,13 +11,11 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class DeliveryAgent extends Agent implements Drawable
+public class DeliveryAgent extends Agent
 {
     private List<Node> _route = new ArrayList<Node>();
     private double _speed = 20;
+    private int _capacity = 10;
     private boolean _isTraveling = false;
     private Circle _body = null;
     private int _radius = 400; //in meters, same as distance matrix
@@ -48,6 +46,13 @@ public class DeliveryAgent extends Agent implements Drawable
                                 e.printStackTrace();
                             }
                         }
+                    } else if (msg.getOntology().equals(MasterRoutingAgent.GET_CAPACITIY_REQUSET_ONTOLOGY)) {
+                        ACLMessage response = new ACLMessage(ACLMessage.INFORM);
+                        response.setOntology(MasterRoutingAgent.GET_CAPACITY_RESPONSE_ONTOLOGY);
+                        response.setContent(String.valueOf(_capacity));
+                        response.addReceiver(msg.getSender());
+
+                        send(response);
                     }
                 }
             }
@@ -94,18 +99,6 @@ public class DeliveryAgent extends Agent implements Drawable
             sequentialTransition.play();
         }
     }
-
-    @Override
-    public void Draw() {
-        _route.add(new Node("AS", new Position(100, 100)));
-        _route.add(new Node("AS", new Position(167.24, 98.35)));
-        FollowRoute();
-    }
-    @Override
-    public void GetAgent() {
-
-    }
-
 }
 
 
