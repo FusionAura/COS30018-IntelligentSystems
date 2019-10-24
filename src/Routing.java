@@ -17,33 +17,54 @@ with constraints.
 public class Routing {
 
     static class DataModel {
-        public final double[][] distanceMatrix = {
-                {0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354, 468, 776, 662},
-                {548, 0, 684, 308, 194, 502, 730, 354, 696, 742, 1084, 594, 480, 674, 1016, 868, 1210},
-                {776, 684, 0, 992, 878, 502, 274, 810, 468, 742, 400, 1278, 1164, 1130, 788, 1552, 754},
-                {696, 308, 992, 0, 114, 650, 878, 502, 844, 890, 1232, 514, 628, 822, 1164, 560, 1358},
-                {582, 194, 878, 114, 0, 536, 764, 388, 730, 776, 1118, 400, 514, 708, 1050, 674, 1244},
-                {274, 502, 502, 650, 536, 0, 228, 308, 194, 240, 582, 776, 662, 628, 514, 1050, 708},
-                {502, 730, 274, 878, 764, 228, 0, 536, 194, 468, 354, 1004, 890, 856, 514, 1278, 480},
-                {194, 354, 810, 502, 388, 308, 536, 0, 342, 388, 730, 468, 354, 320, 662, 742, 856},
-                {308, 696, 468, 844, 730, 194, 194, 342, 0, 274, 388, 810, 696, 662, 320, 1084, 514},
-                {194, 742, 742, 890, 776, 240, 468, 388, 274, 0, 342, 536, 422, 388, 274, 810, 468},
-                {536, 1084, 400, 1232, 1118, 582, 354, 730, 388, 342, 0, 878, 764, 730, 388, 1152, 354},
-                {502, 594, 1278, 514, 400, 776, 1004, 468, 810, 536, 878, 0, 114, 308, 650, 274, 844},
-                {388, 480, 1164, 628, 514, 662, 890, 354, 696, 422, 764, 114, 0, 194, 536, 388, 730},
-                {354, 674, 1130, 822, 708, 628, 856, 320, 662, 388, 730, 308, 194, 0, 342, 422, 536},
-                {468, 1016, 788, 1164, 1050, 514, 514, 662, 320, 274, 388, 650, 536, 342, 0, 764, 194},
-                {776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274, 388, 422, 764, 0, 798},
-                {662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730, 536, 194, 798, 0},
-        };
-        public final int vehicleNumber = 3;
+        private final double[][] _distanceMatrix;
+        private final int _vehicleNumber;
         //demand of each node 0 for 0 as that is our depot, and 1 for every other node location because we want to visit
         //them once only
-        public List<Integer> demands = Arrays.asList(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
+        private List<Integer> _demands;
         //vehicle capacity not extending weight yet
-        public final int[] vehicleCapacities = {6,6,6};
-        public final int depot = 0;
-        public final int packages = this.distanceMatrix.length;
+        private final int[] _vehicleCapacities;
+        private final int _depot;
+        private final int _packages;
+
+        public DataModel(
+                double[][] distanceMatrix,
+                int vehicleNumber,
+                List<Integer> demands,
+                int[] vehicleCapacities,
+                int depot,
+                int packages) {
+            _distanceMatrix = distanceMatrix;
+            _vehicleNumber = vehicleNumber;
+            _demands = demands;
+            _vehicleCapacities = vehicleCapacities;
+            _depot = depot;
+            _packages = packages;
+        }
+
+        public double[][] getDistanceMatrix() {
+            return _distanceMatrix;
+        }
+
+        public int getVehicleNumber() {
+            return _vehicleNumber;
+        }
+
+        public List<Integer> getDemands() {
+            return _demands;
+        }
+
+        public int[] getVehicleCapacities() {
+            return _vehicleCapacities;
+        }
+
+        public int getDepot() {
+            return _depot;
+        }
+
+        public int getPackages() {
+            return _packages;
+        }
     }
 
     static class Routes
@@ -56,10 +77,9 @@ public class Routing {
         }
     }
 
-    public static List<Routes> VRP()
+    public static List<Routes> VRP(DataModel data)
     {
         List<Routes> RoutingManager = new ArrayList<>();
-        DataModel data = new DataModel();
         //get the ideal best route fastest route considering packages total / car total
         //vehicles must return to depot thus extra distance added at the end
         double bestPath = 0;
@@ -82,11 +102,11 @@ public class Routing {
             //get the locations with demands (visit once)
             //data.demands index = location index, value = (0,1) for delivery required
             //converting to locations.list values contains location index
-            for (int d = 0; d < data.demands.size(); d++)
+            for (int d = 0; d < data.getDemands().size(); d++)
             {
 //                System.out.println("Add Loc:"+d + " demands:"+data.demands.get(d));
                 //for every
-                if (data.demands.get(d) == 1)
+                if (data.getDemands().get(d) == 1)
                 {
                     locations.add(d);
                 }
@@ -97,13 +117,13 @@ public class Routing {
                 //double to hold our cost
                 double currentCost = 0;
                 //determining amount of packages a car holds going from least necessary to most by using truncation math.floor
-                if (data.vehicleNumber*data.vehicleCapacities[0] < data.packages)
+                if (data.getVehicleNumber()*data.getVehicleCapacities()[0] < data.getPackages())
                     System.out.println("Capacity < parcels to delivery in 1 run"+ RoutingManager.size());
                 //int load = (int)Math.floor(parcels/data.vehicleNumber);
                 //using simple load=6 debugging
-                int load = data.vehicleCapacities[currentVehicle];
-                if (load> data.vehicleCapacities[currentVehicle])
-                    System.out.println("Load Error , above car capacity:"+load +data.vehicleCapacities[currentVehicle]);
+                int load = data.getVehicleCapacities()[currentVehicle];
+                if (load> data.getVehicleCapacities()[currentVehicle])
+                    System.out.println("Load Error , above car capacity:"+load +data.getVehicleCapacities()[currentVehicle]);
                 //load is used to loop vehicle routing incase load>location size
                 if (locations.size() < load)
                     load = locations.size();
@@ -119,7 +139,7 @@ public class Routing {
                         //get the lowest cost path form the last entry to currentRoute (current location)
                         for (int j = 0; j < locations.size(); j++)
                         {
-                            double current = data.distanceMatrix[currentRoute.get(currentRoute.size()-1)][locations.get(j)];
+                            double current = data.getDistanceMatrix()[currentRoute.get(currentRoute.size()-1)][locations.get(j)];
                             if (current < bestCost)
                             {
                                 bestCost = current;
@@ -138,7 +158,7 @@ public class Routing {
                 if (currentRoute.size()== load+1 || currentRoute.size() == locations.size())
                 {
                     //must return to depot so add this into routing and costs
-                    currentCost += data.distanceMatrix[currentRoute.get(currentRoute.size()-1)][0];
+                    currentCost += data.getDistanceMatrix()[currentRoute.get(currentRoute.size()-1)][0];
                     currentRoute.add(0);
 //                    System.out.println("Loading data%ncar:"+currentVehicle+"%nRoute:"+currentRoute+ "%nCost:"+currentCost);
                     //update Route class
@@ -149,7 +169,7 @@ public class Routing {
                     for (int k = 0; k<currentRoute.size(); k++)
                     {
 //                        System.out.println("cRk:"+currentRoute.get(k)+ " demandsK:"+data.demands.get(currentRoute.get(k)));
-                        data.demands.set(currentRoute.get(k),0);
+                        data.getDemands().set(currentRoute.get(k),0);
                     }
                     //update vars for while(demands) loop
                     if (currentVehicle < 3)
@@ -167,8 +187,34 @@ public class Routing {
 
     public static void main(String [] args)
     {
-
-        List<Routes> RoutingManager = VRP();
+        double[][] distanceMatrix = {
+                {0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354, 468, 776, 662},
+                {548, 0, 684, 308, 194, 502, 730, 354, 696, 742, 1084, 594, 480, 674, 1016, 868, 1210},
+                {776, 684, 0, 992, 878, 502, 274, 810, 468, 742, 400, 1278, 1164, 1130, 788, 1552, 754},
+                {696, 308, 992, 0, 114, 650, 878, 502, 844, 890, 1232, 514, 628, 822, 1164, 560, 1358},
+                {582, 194, 878, 114, 0, 536, 764, 388, 730, 776, 1118, 400, 514, 708, 1050, 674, 1244},
+                {274, 502, 502, 650, 536, 0, 228, 308, 194, 240, 582, 776, 662, 628, 514, 1050, 708},
+                {502, 730, 274, 878, 764, 228, 0, 536, 194, 468, 354, 1004, 890, 856, 514, 1278, 480},
+                {194, 354, 810, 502, 388, 308, 536, 0, 342, 388, 730, 468, 354, 320, 662, 742, 856},
+                {308, 696, 468, 844, 730, 194, 194, 342, 0, 274, 388, 810, 696, 662, 320, 1084, 514},
+                {194, 742, 742, 890, 776, 240, 468, 388, 274, 0, 342, 536, 422, 388, 274, 810, 468},
+                {536, 1084, 400, 1232, 1118, 582, 354, 730, 388, 342, 0, 878, 764, 730, 388, 1152, 354},
+                {502, 594, 1278, 514, 400, 776, 1004, 468, 810, 536, 878, 0, 114, 308, 650, 274, 844},
+                {388, 480, 1164, 628, 514, 662, 890, 354, 696, 422, 764, 114, 0, 194, 536, 388, 730},
+                {354, 674, 1130, 822, 708, 628, 856, 320, 662, 388, 730, 308, 194, 0, 342, 422, 536},
+                {468, 1016, 788, 1164, 1050, 514, 514, 662, 320, 274, 388, 650, 536, 342, 0, 764, 194},
+                {776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274, 388, 422, 764, 0, 798},
+                {662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730, 536, 194, 798, 0},
+        };
+        DataModel data = new DataModel(
+                distanceMatrix,
+                3,
+                Arrays.asList(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),
+                new int[]{6, 6, 6},
+                0,
+                distanceMatrix.length
+        );
+        List<Routes> RoutingManager = VRP(data);
         for(int i =0; i<RoutingManager.size(); i++)
         {
             System.out.println("Vehicle:"+i +"%nPathing to:"+RoutingManager.get(i).route+"%nDistance:"+RoutingManager.get(i).routeCost);
