@@ -15,14 +15,15 @@ import jade.lang.acl.ACLMessage;
 
 public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInterface
 {
-    public static final String DELIVERY_ROUTE_ONTOLOGY = "delivery-route-ontology";
-    public static String START_ROUTE_ONTOLOGY = "start";
+    public static final String DELIVERY_ROUTE_ONTOLOGY = "delivery-route";
+    public static String GET_CAPACITIY_REQUSET_ONTOLOGY = "capacity-request";
+    public static String GET_CAPACITY_RESPONSE_ONTOLOGY = "capacitiy-response";
 
-    private int _capacity;
+    private List<Integer> _vehicleCapacity = new ArrayList<>();
     private Position _position = new Position(100, 100);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
     private List<Node> _allNodes = new ArrayList<Node>();
-
+    private Integer _responses = 0;
     private List<Parcel> _allParcel = new ArrayList<Parcel>();
 
     protected void setup()
@@ -39,23 +40,26 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
                 ACLMessage msg = receive();
                 if(msg!=null)
                 {
-                    //System.out.println(getLocalName()+": Received response "+msg.getContent()+" from "+msg.getSender().getLocalName());
-                    if (msg.getOntology().equals(START_ROUTE_ONTOLOGY)) {
-                        getDeliveryAgents();
+                    if (msg.getOntology().equals(GET_CAPACITY_RESPONSE_ONTOLOGY)) {
+                        synchronized (_responses) {
+                            _responses++;
+                            // id,capacity
+                            String[] response = msg.getContent().split(",");
+                            _vehicleCapacity.add(Integer.parseInt(response[0]), Integer.valueOf(response[1]));
+                        }
                     }
                 }
                 block();
             }
         };
         addBehaviour(msgListenBehaviour);
-        addBehaviour(new VrpOneShot());
 
         NewNode(new Node("warehouse", _position));
     }
-    public void AddParcel(Parcel p)
-    {
+    public void AddParcel(Parcel p) {
         _allParcel.add(p);
     }
+
     private List<AID> getDeliveryAgents() {
         AMSAgentDescription[] agents;
         try {
@@ -140,20 +144,56 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         }
     }
 
+    private void GetCapacity(List<AID> deliveryAgents) {
+        for (AID agent : deliveryAgents) {
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            msg.setLanguage("English");
+
+            msg.setOntology(GET_CAPACITIY_REQUSET_ONTOLOGY);
+            msg.addReceiver(agent);
+
+            send(msg);
+        }
+
+        while (_responses != deliveryAgents.size()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
+
     private void SendRoutes() throws IOException {
         List<AID> deliveryAgents = getDeliveryAgents();
         List<Routing.Routes> newRoute;
         Routing VRPRoute = new Routing();
+        GetCapacity(deliveryAgents);
 
-        newRoute = VRPRoute.VRP();
+        List<Integer> demands = new ArrayList<>(_distanceMatrix.size());
+        for (Parcel parcel : _allParcel) {
+            demands.add(parcel.getDestination(), 1);
+        }
+
+        Routing.DataModel dataModel = new Routing.DataModel(
+                _distanceMatrix,
+                deliveryAgents.size(),
+                demands,
+                _vehicleCapacity,
+                0,
+                _allParcel.size()
+        );
+
+        //TODO: Generate the routes from the Routing class and send them to each delivery agent
+        //TODO: Loop currently sends one test route to each delivery agent
+
+        newRoute = VRPRoute.VRP(dataModel);
 
         for (int i =0;i<deliveryAgents.size();i++)
         {
             List<Node> testRoute = new ArrayList<Node>();
 
             AID agent = deliveryAgents.get(i);
-
-
 
             for (int nodePos : newRoute.get(i).route)
             {
@@ -200,18 +240,5 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
 
     public List<List<Double>> getDistanceMatrix() {
         return _distanceMatrix;
-    }
-
-    private class VrpOneShot extends OneShotBehaviour {
-        VrpOneShot() {
-            System.out.println(getBehaviourName() + ": I have been created");
-        }
-
-        @Override
-        public void action() {
-            System.out.println(getBehaviourName() + ": I will be executed only once");
-            ORToolsVRP test = new ORToolsVRP();
-            test.Calc();
-        }
     }
 }

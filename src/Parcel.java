@@ -1,13 +1,13 @@
 public class Parcel {
-    private String _destination;
+    private int _destination;
     private int _weight;
 
-    public Parcel(String destination, int weight) {
+    public Parcel(int destination, int weight) {
         _destination = destination;
         _weight = weight;
     }
 
-    public String getDestination() {
+    public int getDestination() {
         return _destination;
     }
 
