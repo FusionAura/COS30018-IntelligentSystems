@@ -56,6 +56,25 @@ public class Routing {
         }
     }
 
+    public List<Double> GetNodesInRadius(int nodeIndex, int radius)
+    {
+        List<Double> nodesInRadius = new ArrayList<Double>();
+        int index2 = 0;
+
+        for(double d : DataModel.distanceMatrix[nodeIndex])
+        {
+            if(d<=radius)
+            {
+                //Adds index of node distance based on current position's index in
+                //distance matrix
+                nodesInRadius.add(d);
+            }
+            index2++;
+        }
+
+        return nodesInRadius;
+    }
+
     public static List<Routes> VRP()
     {
         List<Routes> RoutingManager = new ArrayList<>();

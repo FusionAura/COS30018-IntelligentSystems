@@ -108,28 +108,6 @@ public class DeliveryAgent extends Agent implements Drawable
 
     }
 
-    //TODO -- Implement delivery agent current position system
-    //based on distance matrix instead of hard coding
-    public List<Node> GetNodesInRadius()
-    {
-        List<Node> nodesInRadius = new ArrayList<Node>();
-        int index = 0;
-
-        for(double d : Routing.DataModel.distanceMatrix[0])
-        {
-            if(d<=_radius)
-            {
-                //Node position Y indicates number of node, so node with pos Y of 8
-                //means the node 8 is within the radius of the agent, x,y based on
-                //distance matrix
-                nodesInRadius.add(new Node("", new Position(0, index)));
-            }
-            index++;
-        }
-
-        return nodesInRadius;
-    }
-
 }
 
 
