@@ -51,18 +51,8 @@ public class Routing {
         public int vehicleID;
         public List<Integer> route;
         public double routeCost;
-        private String _name;
-        private Position _position;
-
         public Routes()
         {
-        }
-        public double getX() {
-            return _position.getX();
-        }
-
-        public double getY() {
-            return _position.getY();
         }
     }
 
@@ -184,5 +174,4 @@ public class Routing {
             System.out.println("Vehicle:"+i +"%nPathing to:"+RoutingManager.get(i).route+"%nDistance:"+RoutingManager.get(i).routeCost);
         }
     }
-
 }
