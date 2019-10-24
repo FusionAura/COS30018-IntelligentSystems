@@ -152,7 +152,7 @@ public class MainController extends Application {
                 case "P":
                     // Add in another parcel. Must have a destination.
                     // P,weight,destination
-                    Parcel parcel = new Parcel(line.get(2), Integer.parseInt(line.get(1)));
+                    Parcel parcel = new Parcel(Integer.parseInt(line.get(2)), Integer.parseInt(line.get(1)));
                     _parcels.add(parcel);
 
                     try {

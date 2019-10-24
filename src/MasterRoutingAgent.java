@@ -171,8 +171,10 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         GetCapacity(deliveryAgents);
 
         List<Integer> demands = new ArrayList<>(_distanceMatrix.size());
+        List<Integer> parcelWeight = new ArrayList<>();
         for (Parcel parcel : _allParcel) {
             demands.add(parcel.getDestination(), 1);
+            parcelWeight.add(parcel.getWeight());
         }
 
         Routing.DataModel dataModel = new Routing.DataModel(
@@ -181,7 +183,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
                 demands,
                 _vehicleCapacity,
                 0,
-                _allParcel.size()
+                parcelWeight
         );
 
         //TODO: Generate the routes from the Routing class and send them to each delivery agent
