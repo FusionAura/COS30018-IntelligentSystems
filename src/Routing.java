@@ -87,12 +87,12 @@ public class Routing {
         }
     }
 
-    public List<Double> GetNodesInRadius(int nodeIndex, int radius)
+    public List<Double> GetNodesInRadius(DataModel data, int nodeIndex, int radius)
     {
         List<Double> nodesInRadius = new ArrayList<Double>();
         int index2 = 0;
 
-        for(double d : DataModel.distanceMatrix[nodeIndex])
+        for(double d : data.getDistanceMatrix().get(nodeIndex))
         {
             if(d<=radius)
             {
