@@ -55,8 +55,6 @@ public class DeliveryAgent extends Agent implements Drawable
 
         Object[] args = getArguments();
         _body = (Circle) args[0];
-
-        GetNodesInRadius();
     }
 
     // When this method is called, the delivery agent moves towards its next destination by deltaTime (if it has one)
