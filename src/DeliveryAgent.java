@@ -18,6 +18,7 @@ public class DeliveryAgent extends Agent
     private int _capacity = 10;
     private boolean _isTraveling = false;
     private Circle _body = null;
+    private int _radius = 400; //in meters, same as distance matrix
 
     protected void setup()
     {
@@ -73,6 +74,8 @@ public class DeliveryAgent extends Agent
             Node thisNode = _route.get(i);
             Node nextNode = _route.size() == i + 1 ? _route.get(0) : _route.get(i + 1);
 
+            //TODO -- Update delivery agent's current position node
+
             double xTransition = nextNode.getX() - thisNode.getX();
             double yTransition = nextNode.getY() - thisNode.getY();
 
@@ -97,3 +100,5 @@ public class DeliveryAgent extends Agent
         }
     }
 }
+
+
