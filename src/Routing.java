@@ -301,13 +301,7 @@ public class Routing {
         pRM.get(pI).route.add(pNewLoc);
     }
 
-    public static void main(String[] args) {
-
-//        List<Routes> RoutingManager = VRP();
-//        for(int i =0; i<RoutingManager.size(); i++)
-//        {
-//            System.out.println("Vehicle:"+i +"%nPathing to:"+RoutingManager.get(i).route+"%nDistance:"+RoutingManager.get(i).routeCost);
-//        }
+    public static List<Routes> VRP() {
         DataModel data = new DataModel();
         //initialize RouteManager List wiht 3 new Routes, add depot as first route location
         List<Routes> RouteManager = new ArrayList<>();
@@ -318,17 +312,17 @@ public class Routing {
             temp.route.add(0,0);
             RouteManager.add(temp);
         }
-//        List<Integer> testLoc = new ArrayList<>();
-//        testLoc.add(0);
-//        testLoc.add(0);
-//        testLoc.add(0);
-//        List<Integer> testDomain = new ArrayList<>();
-//        List<Integer> test = BestNext(testLoc, testDomain, data);
-//        for (int i = 0; i < test.size(); i++) {
-//            System.out.println(test.get(i));
-//            UpdateRouteManager(RouteManager, i, test.get(i), data);
-//            System.out.println("RM:"+i+RouteManager.get(i).route + " : "+RouteManager.get(i).routeCost);
-//        }
+
+        //our Main Search Loop
+        /*
+
+            while (vehicleLoad>0 && daomin.size()>0)
+                !finished searching?
+                    BestNext set of next locations each vehicle goes to
+                        use Weight to shrink domain space for each vehicle
+                        update vehicle location and data, mainly distance matrix based on neighbouring car deterences etc.
+                        find best cost loc for each vehicle
+         */
         while (data.demands.contains(1))
         {
             List<Integer> currentLoc = new ArrayList<>();
@@ -361,15 +355,16 @@ public class Routing {
         {
             System.out.println("RM:"+i+ RouteManager.get(i).route+ " : "+ RouteManager.get(i).routeCost + " remainingLoad:"+data.vehicleCapacities[i]);
         }
-        //our Main Search Loop
-        /*
 
-            while (vehicleLoad>0 && daomin.size()>0)
-                !finished searching?
-                    BestNext set of next locations each vehicle goes to
-                        use Weight to shrink domain space for each vehicle
-                        update vehicle location and data, mainly distance matrix based on neighbouring car deterences etc.
-                        find best cost loc for each vehicle
-         */
+        return RouteManager;
+    }
+
+    public static void main(String[] args) {
+        List<Routes> RoutingManager = VRP();
+        for(int i =0; i<RoutingManager.size(); i++) {
+            System.out.println("Vehicle:"+i +"%nPathing to:"+RoutingManager.get(i).route+"%nDistance:"+RoutingManager.get(i).routeCost);
+        }
+
+
     }
 }
