@@ -146,8 +146,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         newRoute = VRPRoute.VRP();
 
         for (AID agent : deliveryAgents) {
-            List<Node> testRoute = new ArrayList<Node>(_allNodes);
-
+            List<Routing.Routes> testRoute = new ArrayList<Routing.Routes>(newRoute);
 
 
             MessageObject msgObject = new MessageObject();

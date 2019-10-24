@@ -13,7 +13,7 @@ import java.util.List;
 
 public class DeliveryAgent extends Agent
 {
-    private List<Node> _route = new ArrayList<Node>();
+    private List<Routing.Routes> _route = new ArrayList<Routing.Routes>();
     private double _speed = 20;
     private boolean _isTraveling = false;
     private Circle _body = null;
@@ -37,7 +37,7 @@ public class DeliveryAgent extends Agent
                                 System.out.println("Delivery route message received!");
                                 MessageObject msgObject = (MessageObject) msg.getContentObject();
                                 _route = msgObject.GetRoute();
-                                System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getY());
+                                //System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getY());
                                 System.out.println("Delivery route successfully added!");
                                 FollowRoute();
                             } catch (UnreadableException e) {
@@ -62,8 +62,8 @@ public class DeliveryAgent extends Agent
 
         List<TranslateTransition> transitions = new ArrayList<>();
         for (int i = 0; i < _route.size(); i++) {
-            Node thisNode = _route.get(i);
-            Node nextNode = _route.size() == i + 1 ? _route.get(0) : _route.get(i + 1);
+            Routing.Routes thisNode = _route.get(i);
+            Routing.Routes nextNode = _route.size() == i + 1 ? _route.get(0) : _route.get(i + 1);
 
             double xTransition = nextNode.getX() - thisNode.getX();
             double yTransition = nextNode.getY() - thisNode.getY();

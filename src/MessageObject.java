@@ -2,13 +2,13 @@ import java.io.Serializable;
 import java.util.List;
 
 public class MessageObject implements Serializable {
-    private List<Node> _route;
+    private List<Routing.Routes> _route;
 
-    public void SetRoute(List<Node> route){
+    public void SetRoute(List<Routing.Routes> route){
         _route = route;
     }
 
-    public List<Node> GetRoute(){
+    public List<Routing.Routes> GetRoute(){
         return _route;
     }
 }
