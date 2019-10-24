@@ -229,6 +229,7 @@ public class Routing {
                 System.out.println("loc:"+bestLocs.get(i));
                 System.out.println(("costs:"+bestCosts.get(i)));
             }
+            //choose the vehicle's route that has the ebst cost amongst the vehicles to add first and repeat
             System.out.println("add");
             int bestIndex = 0;
             double bestCost = 99999;
@@ -279,16 +280,11 @@ public class Routing {
             temp.route.add(0,0);
             RouteManager.add(temp);
         }
-        List<Integer> testLoc = new ArrayList<>();
-        testLoc.add(0);
-        testLoc.add(0);
-        testLoc.add(0);
-        List<Integer> testDomain = new ArrayList<>();
-        for (int i = 0; i < data.demands.size(); i++) {
-            if (data.demands.get(i) == 1) {
-                testDomain.add(i);
-            }
-        }
+//        List<Integer> testLoc = new ArrayList<>();
+//        testLoc.add(0);
+//        testLoc.add(0);
+//        testLoc.add(0);
+//        List<Integer> testDomain = new ArrayList<>();
 //        List<Integer> test = BestNext(testLoc, testDomain, data);
 //        for (int i = 0; i < test.size(); i++) {
 //            System.out.println(test.get(i));
@@ -297,12 +293,19 @@ public class Routing {
 //        }
         while (data.demands.contains(1))
         {
+            List<Integer> currentLoc = new ArrayList<>();
+            List<Integer> domain = new ArrayList<>();
             for (int i = 0; i < data.demands.size(); i++) {
                 if (data.demands.get(i) == 1) {
                     System.out.println("demands:"+i);
+                    domain.add(i);
                 }
             }
-            List<Integer> test = BestNext(testLoc, testDomain, data);
+            for (int i = 0; i< RouteManager.size();i++)
+            {
+                currentLoc.add(RouteManager.get(i).route.get(RouteManager.get(i).route.size()-1));
+            }
+            List<Integer> test = BestNext(currentLoc, domain, data);
             for (int i = 0; i < test.size(); i++) {
                 if (test.get(i) != null)
                 {
@@ -310,9 +313,15 @@ public class Routing {
                 }
             }
         }
+        //add the final destination + cost back to warehouse
+        for (int i = 0; i<RouteManager.size();i++)
+        {
+
+            UpdateRouteManager(RouteManager, i, 0, data);
+        }
         for (int i = 0; i < RouteManager.size();i++)
         {
-            System.out.println("RM:"+i+ RouteManager.get(i).route+ " : "+ RouteManager.get(i).routeCost+ " remainingLoad:"+data.vehicleCapacities[i]);
+            System.out.println("RM:"+i+ RouteManager.get(i).route+ " : "+ RouteManager.get(i).routeCost + " remainingLoad:"+data.vehicleCapacities[i]);
         }
         //our Main Search Loop
         /*
