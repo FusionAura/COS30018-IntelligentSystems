@@ -22,7 +22,9 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     private Position _position = new Position(100, 100);
     private List<List<Double>> _distanceMatrix = new ArrayList<List<Double>>();
     private List<Node> _allNodes = new ArrayList<Node>();
-    
+
+    private List<Parcel> _allParcel = new ArrayList<Parcel>();
+
     protected void setup()
     {
         //https://stackoverflow.com/questions/28652869/how-to-get-agents-on-all-containers-jade
@@ -50,7 +52,10 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
 
         NewNode(new Node("warehouse", _position));
     }
-
+    public void AddParcel(Parcel p)
+    {
+        _allParcel.add(p);
+    }
     private List<AID> getDeliveryAgents() {
         AMSAgentDescription[] agents;
         try {
@@ -140,9 +145,6 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         List<Routing.Routes> newRoute;
         Routing VRPRoute = new Routing();
 
-        //TODO: Generate the routes from the Routing class and send them to each delivery agent
-        //TODO: Loop currently sends one test route to each delivery agent
-
         newRoute = VRPRoute.VRP();
 
         for (int i =0;i<deliveryAgents.size();i++)
@@ -150,6 +152,8 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             List<Node> testRoute = new ArrayList<Node>();
 
             AID agent = deliveryAgents.get(i);
+
+
 
             for (int nodePos : newRoute.get(i).route)
             {

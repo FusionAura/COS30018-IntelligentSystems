@@ -154,6 +154,12 @@ public class MainController extends Application {
                     // P,weight,destination
                     Parcel parcel = new Parcel(line.get(2), Integer.parseInt(line.get(1)));
                     _parcels.add(parcel);
+
+                    try {
+                        _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class).AddParcel(parcel);
+                    } catch (StaleProxyException e) {
+                        e.printStackTrace();
+                    }
                     break;
 
                 default:
