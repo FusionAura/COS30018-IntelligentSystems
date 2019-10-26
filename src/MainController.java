@@ -1,6 +1,11 @@
+import jade.core.AID;
 import jade.core.Runtime;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
+import jade.domain.AMSService;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
+import jade.lang.acl.ACLMessage;
 import jade.wrapper.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +104,35 @@ public class MainController extends Application {
         launch(args);
     }
 
+    public void addNewDeliveryAgent(int capacity)
+    {
+        try {
+            Circle agentBody = new Circle(100, 100, 5, _deliveryColors[_deliveryColorPosition]);
+            _deliveryColorPosition++;
+            if (_deliveryColorPosition == _deliveryColors.length) {
+                _deliveryColorPosition = 0;
+            }
+
+            _guiController.RegisterCircle(agentBody);
+
+            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + (_guiController.DoList.size()+1), DeliveryAgent.class.getName(), new Object[] {agentBody, capacity});
+            newDeliveryAgent.start();
+
+            _guiController.DoList.add(newDeliveryAgent.getName());
+        } catch (StaleProxyException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void removeDeliveryAgent(int index)  {
+        try
+        {
+            String agentName = _guiController.DoList.get(index).toString();
+            _mainCtrl.getAgent(agentName.substring(0, agentName.indexOf("@"))).kill();
+        }
+        catch (ControllerException e) { }
+    }
+
 
     private void readFromConfigFile() {
         CSVFileReader reader = new CSVFileReader();
@@ -113,22 +147,7 @@ public class MainController extends Application {
                     // S,numOfDeliveryAgents,agent1capacity,agent2capacity...
                     int numOfDeliveryAgents = Integer.parseInt(line.get(1));
                     for (int i = 1; i <= numOfDeliveryAgents; i++) {
-                        try {
-                            Circle agentBody = new Circle(100, 100, 5, _deliveryColors[_deliveryColorPosition]);
-                            _deliveryColorPosition++;
-                            if (_deliveryColorPosition == _deliveryColors.length) {
-                                _deliveryColorPosition = 0;
-                            }
-
-                            _guiController.RegisterCircle(agentBody);
-
-                            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + i, DeliveryAgent.class.getName(), new Object[] {agentBody, Integer.parseInt(line.get(i+1))});
-                            newDeliveryAgent.start();
-                            _guiController.DoList.add(newDeliveryAgent.getName());
-                        } catch (StaleProxyException e) {
-                            e.printStackTrace();
-                        }
-
+                        addNewDeliveryAgent(Integer.parseInt(line.get(i+1)));
                     }
                     break;
 
