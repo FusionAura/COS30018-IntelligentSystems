@@ -109,8 +109,8 @@ public class MainController extends Application {
 
             switch (type) {
                 case "S":
-                    // General settings such as number of delivery agents.
-                    // S,numOfDeliveryAgents
+                    // General settings such as number of delivery agents and delivery agent capacity/weight.
+                    // S,numOfDeliveryAgents,agent1capacity,agent2capacity...
                     int numOfDeliveryAgents = Integer.parseInt(line.get(1));
                     for (int i = 1; i <= numOfDeliveryAgents; i++) {
                         try {
@@ -122,7 +122,7 @@ public class MainController extends Application {
 
                             _guiController.RegisterCircle(agentBody);
 
-                            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + i, DeliveryAgent.class.getName(), new Object[] {agentBody});
+                            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + i, DeliveryAgent.class.getName(), new Object[] {agentBody, Integer.parseInt(line.get(i+1))});
                             newDeliveryAgent.start();
                             _guiController.DoList.add(newDeliveryAgent.getName());
                         } catch (StaleProxyException e) {
