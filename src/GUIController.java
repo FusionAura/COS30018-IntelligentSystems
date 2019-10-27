@@ -3,6 +3,7 @@ import javafx.event.EventHandler;
 import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
@@ -14,6 +15,7 @@ import javafx.scene.shape.*;
 import java.net.URL;
 import javafx.scene.layout.*;
 import javafx.scene.Scene;
+import javafx.scene.text.TextAlignment;
 
 import java.util.*;
 
@@ -41,7 +43,7 @@ public class GUIController implements Initializable {
 
     public Scene scene;
 
-    private Map<Circle, String> _circleReference = new HashMap<>();
+    private Map<Circle, Text> _circleReference = new HashMap<>();
     private Circle _highlightedNode = null;
     private Paint _highlightedNodeColor = null;
 
@@ -140,7 +142,7 @@ public class GUIController implements Initializable {
             }
         } while (!descriptionGotten);
 
-        Parcel parcel = new Parcel(weight, _circleReference.get(_highlightedNode), description);
+        Parcel parcel = new Parcel(weight, _circleReference.get(_highlightedNode).getText(), description);
         MainClass.addParcel(parcel);
 
         showMessageWindow(Alert.AlertType.INFORMATION, "Success", "New Parcel Added!");
@@ -179,8 +181,15 @@ public class GUIController implements Initializable {
 
     // Use this method if you want to refer to that circle later
     public void registerCircle(Circle newCircle, String reference) {
-        _circleReference.put(newCircle, reference);
-        registerCircle(newCircle);
+        newCircle.setPickOnBounds(false);
+
+        Text text = new Text(reference);
+        text.setMouseTransparent(true);
+        text.setX(newCircle.getCenterX() - text.getBoundsInLocal().getWidth()/2);
+        text.setY(newCircle.getCenterY() - text.getBoundsInLocal().getHeight()/2);
+
+        mapPane.getChildren().addAll(newCircle, text);
+        _circleReference.put(newCircle, text);
     }
 
     public void registerParcel(Parcel parcel) {
@@ -257,10 +266,12 @@ public class GUIController implements Initializable {
                 }
             }
 
-            MainClass.removeNode(_circleReference.get(_highlightedNode));
+            Text textToRemove = _circleReference.get(_highlightedNode);
 
+            MainClass.removeNode(textToRemove.getText());
             _circleReference.remove(_highlightedNode);
-            mapPane.getChildren().remove(_highlightedNode);
+
+            mapPane.getChildren().removeAll(_highlightedNode, textToRemove);
 
             _highlightedNode = null;
             _highlightedNodeColor = null;
@@ -272,11 +283,13 @@ public class GUIController implements Initializable {
     public void HighlightNode(Circle circle) {
         if (_highlightedNode != null) {
             _highlightedNode.setFill(_highlightedNodeColor);
+            _circleReference.get(_highlightedNode).setFill(Color.BLACK);
         }
         _highlightedNode = circle;
         _highlightedNodeColor = circle.getFill();
 
         _highlightedNode.setFill(Color.RED);
+        _circleReference.get(_highlightedNode).setFill(Color.RED);
     }
 
     public void Quit()
