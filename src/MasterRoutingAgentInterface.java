@@ -1,6 +1,7 @@
 public interface MasterRoutingAgentInterface {
-    void StartRouting();
-    void NewNode(Node newNode);
-    void RemoveNode(Node node);
-    void AddParcel(Parcel p);
+    void startRouting();
+    void newNode(Node newNode);
+    void removeNode(Node node);
+    void addParcel(Parcel p);
+    void removeParcel(Parcel p);
 }
