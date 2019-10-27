@@ -11,8 +11,13 @@ public class Node implements Serializable {
         _name = name;
         _position = position;
     }
-    public boolean isAddress(String address) {
-        return address.equals(_name);
+
+    public String getName() {
+        return _name;
+    }
+
+    public boolean amI(String name) {
+        return name.equals(_name);
     }
   
     public Circle getBody() {

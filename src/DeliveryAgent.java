@@ -60,6 +60,7 @@ public class DeliveryAgent extends Agent
 
         Object[] args = getArguments();
         _body = (Circle) args[0];
+        _body.setMouseTransparent(true);
     }
 
     // When this method is called, the delivery agent moves towards its next destination by deltaTime (if it has one)
