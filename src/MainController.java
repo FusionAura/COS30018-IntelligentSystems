@@ -1,25 +1,22 @@
-import jade.core.AID;
 import jade.core.Runtime;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
-import jade.domain.AMSService;
-import jade.domain.FIPAAgentManagement.AMSAgentDescription;
-import jade.domain.FIPAAgentManagement.SearchConstraints;
-import jade.lang.acl.ACLMessage;
 import jade.wrapper.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ListView;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.shape.*;
-import javafx.event.EventHandler;
+import javafx.stage.Stage;
+
 import javafx.stage.WindowEvent;
 
 public class MainController extends Application {

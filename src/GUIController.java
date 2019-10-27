@@ -1,7 +1,9 @@
-import jade.tools.sniffer.AgentList;
-import javafx.animation.Animation;
-import javafx.animation.SequentialTransition;
-import javafx.animation.TranslateTransition;
+import java.net.URL;
+import java.util.ResourceBundle;
+import java.util.*;
+
+import javafx.collections.ObservableList;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -9,33 +11,12 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
-import javafx.collections.ObservableList;
-import javafx.collections.FXCollections;
-import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.shape.*;
-import java.net.URL;
 import javafx.scene.layout.*;
-import javafx.scene.Group;
-import javafx.util.Duration;
+import javafx.scene.control.*;
 import javafx.scene.Scene;
-import java.util.List;
-import java.util.ArrayList;
-import javafx.application.Application;
-import javafx.fxml.FXML;
-import javafx.scene.control.ListView;
-import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.shape.*;
-import javafx.event.EventHandler;
-import javafx.stage.WindowEvent;
 
-import java.util.ResourceBundle;
 
 public class GUIController implements Initializable {
     //List View variables.
@@ -47,6 +28,9 @@ public class GUIController implements Initializable {
 
     @FXML
     public Button createAgentButton;
+
+    @FXML
+    public Button deleteAgentButton;
 
     @FXML
     private AnchorPane apMain;
@@ -69,10 +53,10 @@ public class GUIController implements Initializable {
             }
         });
 
-        AgentsList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+        deleteAgentButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
-            public void handle(MouseEvent mouseEvent) {
-                DeleteDeliveryAgentWindow(AgentsList.getSelectionModel().getSelectedIndex());
+            public void handle(ActionEvent actionEvent) {
+                DeleteDeliveryAgentWindow();
             }
         });
     }
@@ -87,91 +71,64 @@ public class GUIController implements Initializable {
 
     public void AddNewAgentWindow()
     {
-        Button closeButton = new Button("Close");
-        Button saveButton = new Button("Save");
-        javafx.scene.control.Label textLabel = new javafx.scene.control.Label("Enter delivery agent capacity: ");
-        TextField textField = new TextField();
-        Pane secondPane = new Pane();
-        secondPane.getChildren().add(textField);
-        secondPane.getChildren().add(closeButton);
-        secondPane.getChildren().add(saveButton);
-        secondPane.getChildren().add(textLabel);
-        textLabel.setLayoutX(10);
-        textLabel.setLayoutY(10);
-        textField.setLayoutX(170);
-        textField.setLayoutY(10);
-        closeButton.setLayoutX(10);
-        closeButton.setLayoutY(50);
-        saveButton.setLayoutX(280);
-        saveButton.setLayoutY(50);
-        Scene newScene = new Scene(secondPane, 350, 100);
-        Stage newWindow = new Stage();
-        newWindow.setTitle("Add new agent");
-        newWindow.setScene(newScene);
-        newWindow.show();
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("New delivery agent");
+        dialog.setHeaderText("Creating new delivery agent");
+        dialog.setContentText("Please enter the capacity of the delivery agent");
 
-        closeButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                newWindow.close();
-            }
-        });
+        int capacity = 0;
+        boolean capacityGotten = false;
 
-        saveButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                try
+        do {
+            Optional<String> response = dialog.showAndWait();
+            if (response.isPresent()) {
+                String potentialCapacity = response.get();
+                if(potentialCapacity.isBlank())
                 {
-                    if((textField.getText()!=null && !textField.getText().isEmpty()))
-                    {
-                        MainClass.addNewDeliveryAgent(Integer.parseInt(textField.getText()));
-                        PopulateAgentList();
-                        newWindow.close();
+                    showMessageWindow(Alert.AlertType.ERROR, "ERROR", "Please enter a capacity");
+                }
+                else {
+                    try {
+                        capacity = Integer.parseInt(potentialCapacity);
+                        capacityGotten = true;
+                    } catch (NumberFormatException e) {
+                        showMessageWindow(Alert.AlertType.ERROR, "ERROR", "Please enter a value for the capacity");
                     }
                 }
-                catch(NumberFormatException e)
-                {
-                    textLabel.setText("Not a valid number");
-                }
             }
-        });
+            else
+            {
+                return;
+            }
+        }while(!capacityGotten);
+
+        MainClass.addNewDeliveryAgent(capacity);
+        PopulateAgentList();
+
+        showMessageWindow(Alert.AlertType.INFORMATION, "Success", "New delivery agent added");
     }
 
-    public void DeleteDeliveryAgentWindow(int index)
+    public void DeleteDeliveryAgentWindow()
     {
-        Button yesButton = new Button("Yes");
-        Button noButton = new Button("No");
-        javafx.scene.control.Label textLabel = new javafx.scene.control.Label("Remove selected delivery agent?");
-        Pane secondPane = new Pane();
-        secondPane.getChildren().add(yesButton);
-        secondPane.getChildren().add(noButton);
-        secondPane.getChildren().add(textLabel);
-        yesButton.setLayoutX(150);
-        yesButton.setLayoutY(50);
-        noButton.setLayoutX(10);
-        noButton.setLayoutY(50);
-        Scene newScene = new Scene(secondPane, 200, 100);
-        Stage newWindow = new Stage();
-        newWindow.setTitle("Remove agent");
-        newWindow.setScene(newScene);
-        newWindow.show();
+        int index = AgentsList.getSelectionModel().getSelectedIndex();
 
-        noButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                newWindow.close();
-            }
-        });
+        if (index<0||index>=DoList.size()) {
+            showMessageWindow(Alert.AlertType.WARNING, "WARNING", "Please select a delivery agent first");
+            return;
+        }
 
-        yesButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                MainClass.removeDeliveryAgent(index);
-                DoList.remove(index);
-                PopulateAgentList();
-                newWindow.close();
-            }
-        });
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Deleting Delivery Agent");
+        confirmation.setHeaderText(null);
+        confirmation.setContentText("Are you sure you want to delete the selected delivery agent?");
+
+        Optional<ButtonType> result = confirmation.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            MainClass.removeDeliveryAgent(index);
+            DoList.remove(index);
+            PopulateAgentList();
+            showMessageWindow(Alert.AlertType.INFORMATION, "Success", "Delivery agent deleted.");
+        }
     }
 
     @FXML
@@ -198,6 +155,14 @@ public class GUIController implements Initializable {
     public void Quit()
     {
         System.exit(0);
+    }
+
+    private void showMessageWindow(Alert.AlertType type, String title, String content) {
+        Alert warn = new Alert(type);
+        warn.setTitle(title);
+        warn.setHeaderText(null);
+        warn.setContentText(content);
+        warn.showAndWait();
     }
 
     /*

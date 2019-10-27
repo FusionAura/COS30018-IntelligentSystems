@@ -44,7 +44,7 @@
       <AnchorPane fx:id = "apMain" maxHeight="-1.0" maxWidth="-1.0" prefHeight="280.0" prefWidth="774.0" VBox.vgrow="ALWAYS">
       <children>
             <Button fx:id="createAgentButton" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#createAgent" text="Create Agent" />
-            <Button layoutX="14.0" layoutY="283.0" mnemonicParsing="false" text="Delete Agent" />
+            <Button fx:id="deleteAgentButton" layoutX="14.0" layoutY="283.0" mnemonicParsing="false" text="Delete Agent" />
             <Accordion layoutX="37.0" layoutY="64.0" />
             <Button layoutX="101.0" layoutY="14.0" mnemonicParsing="false" onAction="#runButton" text="Run" />
             <ListView fx:id="AgentsList" layoutX="15.0" layoutY="39.0" prefHeight="200.0" prefWidth="261.0" />

@@ -7,7 +7,6 @@ import java.util.Random;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.AMSService;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
@@ -18,7 +17,6 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     public static final String DELIVERY_ROUTE_ONTOLOGY = "delivery-route";
     public static String GET_CAPACITIY_REQUSET_ONTOLOGY = "capacity-request";
     public static String GET_CAPACITY_RESPONSE_ONTOLOGY = "capacitiy-response";
-    public static String DELETE_DELIVERY_AGENT_ONTOLOGY = "delete-delivey-agent-request";
 
     private List<Integer> _vehicleCapacity = new ArrayList<>();
     private Position _position = new Position(100, 100);
@@ -85,27 +83,6 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         }
 
         return deliveryAgents;
-    }
-
-    public void printDeliveryAgents() {
-        AMSAgentDescription[] agents;
-        try {
-            SearchConstraints c = new SearchConstraints();
-            c.setMaxResults ( new Long(-1) );
-            agents = AMSService.search( this, new AMSAgentDescription(), c );
-        }
-        catch (Exception e)
-        {
-            System.out.println( "Problem searching AMS: " + e );
-            e.printStackTrace();
-            agents = new AMSAgentDescription[]{};
-        }
-        List<AID> deliveryAgents = new ArrayList<>();
-
-        AID myID = getAID(); //This method to get the identity of //agents such as (Name , adress , host ....etc)
-        for (AMSAgentDescription agent : agents) {
-            System.out.println(agent.getName());
-        }
     }
 
     @Override
