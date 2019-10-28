@@ -76,7 +76,7 @@ public class MainController extends Application {
         _mainAgentController = _mainCtrl.createNewAgent("MasterRoutingAgent", MasterRoutingAgent.class.getName(), new Object[0]);
         _mainAgentController.start();
         //Register Master Routing position
-        _guiController.RegisterCircle(new Circle(100, 100, 10, Color.CHOCOLATE));
+        _guiController.registerCircle(new Circle(100, 100, 10, Color.CHOCOLATE));
         
         readFromConfigFile();
 
@@ -89,7 +89,12 @@ public class MainController extends Application {
     public void runAction() {
         try {
             MasterRoutingAgentInterface masterRoutingAgentInterface = _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class);
-            masterRoutingAgentInterface.StartRouting();
+            masterRoutingAgentInterface.startRouting();
+
+            //After we run the algorithm, remove all the parcels (they're being delivered!)
+            for (int i = 0; i < _parcels.size();) {
+                removeParcel(_parcels.get(i));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -101,8 +106,7 @@ public class MainController extends Application {
         launch(args);
     }
 
-    public void addNewDeliveryAgent(int capacity)
-    {
+    public void addNewDeliveryAgent(int capacity) {
         try {
             Circle agentBody = new Circle(100, 100, 5, _deliveryColors[_deliveryColorPosition]);
             _deliveryColorPosition++;
@@ -116,6 +120,45 @@ public class MainController extends Application {
             newDeliveryAgent.start();
 
             _guiController.DoList.add(newDeliveryAgent.getName());
+          
+            } catch (StaleProxyException e) {
+              e.printStackTrace();
+        }
+    }
+
+    public void addNode(String name, Position nodePosition) {
+        Node node = new Node(name, nodePosition);
+        _guiController.registerCircle(node.getBody(), name);
+        _nodes.add(node);
+
+        try {
+            _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class).newNode(node);
+        } catch (StaleProxyException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void removeNode(String name) {
+        for (Node n : _nodes) {
+            if (n.amI(name)) {
+                _nodes.remove(n);
+                try {
+                    _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class).removeNode(n);
+                } catch (StaleProxyException e) {
+                    e.printStackTrace();
+                }
+
+                break;
+            }
+        }
+    }
+
+    public void addParcel(Parcel parcel) {
+        _parcels.add(parcel);
+        _guiController.registerParcel(parcel);
+
+        try {
+            _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class).addParcel(parcel);
         } catch (StaleProxyException e) {
             e.printStackTrace();
         }
@@ -127,9 +170,25 @@ public class MainController extends Application {
             String agentName = _guiController.DoList.get(index).toString();
             _mainCtrl.getAgent(agentName.substring(0, agentName.indexOf("@"))).kill();
         }
-        catch (ControllerException e) { }
+        catch (ControllerException e) {
+          e.printStackTrace();
+        }
     }
 
+    public void removeParcel(Parcel parcel) {
+        _parcels.remove(parcel);
+        _guiController.unregisterParcel(parcel);
+
+        try {
+            _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class).removeParcel(parcel);
+        } catch (StaleProxyException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean doesNodeExist(String name) {
+        return _nodes.stream().anyMatch(node -> node.amI(name));
+    }
 
     private void readFromConfigFile() {
         CSVFileReader reader = new CSVFileReader();
@@ -153,31 +212,16 @@ public class MainController extends Application {
                     // N,posX,posY,nodeName
                     Position nodePosition = new Position(Double.parseDouble(line.get(1)), Double.parseDouble(line.get(2)));
 
-                    Node node = new Node(line.get(3), nodePosition);
-                    _guiController.RegisterCircle(node.getBody());
-                    _nodes.add(node);
-
-                    try {
-                        _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class).NewNode(node);
-                    } catch (StaleProxyException e) {
-                        e.printStackTrace();
-                    }
+                    addNode(line.get(3), nodePosition);
 
                     break;
 
                 case "P":
                     // Add in another parcel. Must have a destination.
-                    // P,weight,destination
-                    Parcel parcel = new Parcel(Integer.parseInt(line.get(2)), Integer.parseInt(line.get(1)));
-                    _parcels.add(parcel);
-
-                    try {
-                        _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class).AddParcel(parcel);
-                    } catch (StaleProxyException e) {
-                        e.printStackTrace();
-                    }
+                    // P,weight,destination,description
+                    Parcel parcel = new Parcel(Integer.parseInt(line.get(1)), line.get(2), line.get(3));
+                    addParcel(parcel);
                     break;
-
                 default:
                     System.out.println("Invalid line, ignoring");
             }

@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 import jade.core.AID;
@@ -53,10 +54,13 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         };
         addBehaviour(msgListenBehaviour);
 
-        NewNode(new Node("warehouse", _position));
+        newNode(new Node("warehouse", _position));
     }
-    public void AddParcel(Parcel p) {
+    public void addParcel(Parcel p) {
         _allParcel.add(p);
+    }
+    public void removeParcel(Parcel p) {
+        _allParcel.remove(p);
     }
 
     private List<AID> getDeliveryAgents() {
@@ -87,7 +91,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
 
     @Override
     // Notify that a new node has been created and update the distance matrix
-    public synchronized void NewNode(Node newNode) {
+    public synchronized void newNode(Node newNode) {
         if (_allNodes.contains(newNode)) {
             return;
         }
@@ -112,7 +116,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         _allNodes.add(newNode);
     }
 
-    public synchronized void RemoveNode(Node node) {
+    public synchronized void removeNode(Node node) {
         int position = _allNodes.indexOf(node);
         if (position >= 0) {
             RemoveNode(position);
@@ -135,7 +139,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     }
 
     @Override
-    public void StartRouting() {
+    public void startRouting() {
         try {
             SendRoutes();
         } catch (Exception e) {
@@ -172,8 +176,14 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         List<Integer> demands = new ArrayList<>(_distanceMatrix.size());
         List<Integer> parcelWeight = new ArrayList<>();
         for (Parcel parcel : _allParcel) {
-            demands.add(parcel.getDestination(), 1);
-            parcelWeight.add(parcel.getWeight());
+            Optional<Node> destination = _allNodes.stream()
+                    .filter(node -> node.amI(parcel.getDestination()))
+                    .findFirst();
+            if (destination.isPresent()) {
+               int index = _allNodes.indexOf(destination.get());
+                demands.add(index, 1);
+                parcelWeight.add(parcel.getWeight());
+            }
         }
 
         Routing.DataModel dataModel = new Routing.DataModel(
@@ -225,7 +235,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         Random rand = new Random();
         for (int i = 0; i < 10; i++) {
             Node newNode = new Node("Node" + i, new Position(rand.nextInt(100), rand.nextInt(100)));
-            masterRoutingAgent.NewNode(newNode);
+            masterRoutingAgent.newNode(newNode);
         }
 
         DecimalFormat myFormat = new DecimalFormat("##");
