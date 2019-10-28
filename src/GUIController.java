@@ -285,15 +285,6 @@ public class GUIController implements Initializable {
         _circleReference.put(newCircle, text);
     }
 
-    private void showMessageWindow(Alert.AlertType type, String title, String content) {
-        Alert warn = new Alert(type);
-        warn.setTitle(title);
-        warn.setHeaderText(null);
-        warn.setContentText(content);
-        warn.showAndWait();
-    }
-
-
     public void registerParcel(Parcel parcel) {
         _parcelViewList.add(parcel);
     }
@@ -361,6 +352,7 @@ public class GUIController implements Initializable {
                 Parcel parcel = _parcelViewList.get(i);
                 if (parcel.getDestination().equals(_circleReference.get(_highlightedNode))) {
                     MainClass.removeParcel(parcel);
+                    _parcelViewList.remove(parcel);
                 } else {
                     //Increment the counter if we did not delete a parcel
                     //If we did delete a parcel then i will point to the next parcel

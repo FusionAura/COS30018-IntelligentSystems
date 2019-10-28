@@ -114,7 +114,7 @@ public class MainController extends Application {
                 _deliveryColorPosition = 0;
             }
 
-            _guiController.RegisterCircle(agentBody);
+            _guiController.registerCircle(agentBody);
 
             AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + (_guiController.DoList.size()+1), DeliveryAgent.class.getName(), new Object[] {agentBody, capacity});
             newDeliveryAgent.start();
