@@ -1,8 +1,18 @@
+import java.net.URL;
+import java.util.ResourceBundle;
+import java.util.*;
+
+import javafx.collections.ObservableList;
+import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
+
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.collections.ObservableList;
@@ -12,8 +22,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.scene.shape.*;
-import java.net.URL;
 import javafx.scene.layout.*;
+import javafx.scene.control.*;
 import javafx.scene.Scene;
 import javafx.scene.text.TextAlignment;
 
@@ -28,6 +38,12 @@ public class GUIController implements Initializable {
     public ListView AgentsList;
     @FXML
     public ListView ParcelList;
+
+    @FXML
+    public Button createAgentButton;
+
+    @FXML
+    public Button deleteAgentButton;
 
     @FXML
     private AnchorPane apMain;
@@ -48,6 +64,20 @@ public class GUIController implements Initializable {
     private Paint _highlightedNodeColor = null;
 
     public void initialize(URL url, ResourceBundle rb) {
+        createAgentButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+               AddNewAgentWindow();
+            }
+        });
+
+        deleteAgentButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                DeleteDeliveryAgentWindow();
+            }
+        });
+
         mapPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
@@ -73,6 +103,69 @@ public class GUIController implements Initializable {
 
         RefreshGUI();
     }
+
+    public void AddNewAgentWindow()
+    {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("New delivery agent");
+        dialog.setHeaderText("Creating new delivery agent");
+        dialog.setContentText("Please enter the capacity of the delivery agent");
+
+        int capacity = 0;
+        boolean capacityGotten = false;
+
+        do {
+            Optional<String> response = dialog.showAndWait();
+            if (response.isPresent()) {
+                String potentialCapacity = response.get();
+                if(potentialCapacity.isBlank())
+                {
+                    showMessageWindow(Alert.AlertType.ERROR, "ERROR", "Please enter a capacity");
+                }
+                else {
+                    try {
+                        capacity = Integer.parseInt(potentialCapacity);
+                        capacityGotten = true;
+                    } catch (NumberFormatException e) {
+                        showMessageWindow(Alert.AlertType.ERROR, "ERROR", "Please enter a value for the capacity");
+                    }
+                }
+            }
+            else
+            {
+                return;
+            }
+        }while(!capacityGotten);
+
+        MainClass.addNewDeliveryAgent(capacity);
+        PopulateAgentList();
+
+        showMessageWindow(Alert.AlertType.INFORMATION, "Success", "New delivery agent added");
+    }
+
+    public void DeleteDeliveryAgentWindow()
+    {
+        int index = AgentsList.getSelectionModel().getSelectedIndex();
+
+        if (index<0||index>=DoList.size()) {
+            showMessageWindow(Alert.AlertType.WARNING, "WARNING", "Please select a delivery agent first");
+            return;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Deleting Delivery Agent");
+        confirmation.setHeaderText(null);
+        confirmation.setContentText("Are you sure you want to delete the selected delivery agent?");
+
+        Optional<ButtonType> result = confirmation.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            MainClass.removeDeliveryAgent(index);
+            DoList.remove(index);
+            PopulateAgentList();
+            showMessageWindow(Alert.AlertType.INFORMATION, "Success", "Delivery agent deleted.");
+        }
+    }
+
     @FXML
     public void PopulateAgentList()
     {
@@ -191,6 +284,15 @@ public class GUIController implements Initializable {
         mapPane.getChildren().addAll(newCircle, text);
         _circleReference.put(newCircle, text);
     }
+
+    private void showMessageWindow(Alert.AlertType type, String title, String content) {
+        Alert warn = new Alert(type);
+        warn.setTitle(title);
+        warn.setHeaderText(null);
+        warn.setContentText(content);
+        warn.showAndWait();
+    }
+
 
     public void registerParcel(Parcel parcel) {
         _parcelViewList.add(parcel);

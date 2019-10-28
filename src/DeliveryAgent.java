@@ -15,7 +15,7 @@ public class DeliveryAgent extends Agent
 {
     private List<Node> _route = new ArrayList<Node>();
     private double _speed = 20;
-    private int _capacity = 10;
+    private int _capacity;
     private boolean _isTraveling = false;
     private Circle _body = null;
     private int _radius = 400; //in meters, same as distance matrix
@@ -60,6 +60,8 @@ public class DeliveryAgent extends Agent
 
         Object[] args = getArguments();
         _body = (Circle) args[0];
+        _capacity = (int) args[1];
+        
         _body.setMouseTransparent(true);
     }
 

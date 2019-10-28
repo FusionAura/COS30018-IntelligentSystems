@@ -2,19 +2,21 @@ import jade.core.Runtime;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.wrapper.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ListView;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.shape.*;
-import javafx.event.EventHandler;
+import javafx.stage.Stage;
+
 import javafx.stage.WindowEvent;
 
 public class MainController extends Application {
@@ -104,6 +106,26 @@ public class MainController extends Application {
         launch(args);
     }
 
+    public void addNewDeliveryAgent(int capacity) {
+        try {
+            Circle agentBody = new Circle(100, 100, 5, _deliveryColors[_deliveryColorPosition]);
+            _deliveryColorPosition++;
+            if (_deliveryColorPosition == _deliveryColors.length) {
+                _deliveryColorPosition = 0;
+            }
+
+            _guiController.RegisterCircle(agentBody);
+
+            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + (_guiController.DoList.size()+1), DeliveryAgent.class.getName(), new Object[] {agentBody, capacity});
+            newDeliveryAgent.start();
+
+            _guiController.DoList.add(newDeliveryAgent.getName());
+          
+            } catch (StaleProxyException e) {
+              e.printStackTrace();
+        }
+    }
+
     public void addNode(String name, Position nodePosition) {
         Node node = new Node(name, nodePosition);
         _guiController.registerCircle(node.getBody(), name);
@@ -142,6 +164,17 @@ public class MainController extends Application {
         }
     }
 
+    public void removeDeliveryAgent(int index)  {
+        try
+        {
+            String agentName = _guiController.DoList.get(index).toString();
+            _mainCtrl.getAgent(agentName.substring(0, agentName.indexOf("@"))).kill();
+        }
+        catch (ControllerException e) {
+          e.printStackTrace();
+        }
+    }
+
     public void removeParcel(Parcel parcel) {
         _parcels.remove(parcel);
         _guiController.unregisterParcel(parcel);
@@ -166,26 +199,11 @@ public class MainController extends Application {
 
             switch (type) {
                 case "S":
-                    // General settings such as number of delivery agents.
-                    // S,numOfDeliveryAgents
+                    // General settings such as number of delivery agents and delivery agent capacity/weight.
+                    // S,numOfDeliveryAgents,agent1capacity,agent2capacity...
                     int numOfDeliveryAgents = Integer.parseInt(line.get(1));
                     for (int i = 1; i <= numOfDeliveryAgents; i++) {
-                        try {
-                            Circle agentBody = new Circle(100, 100, 5, _deliveryColors[_deliveryColorPosition]);
-                            _deliveryColorPosition++;
-                            if (_deliveryColorPosition == _deliveryColors.length) {
-                                _deliveryColorPosition = 0;
-                            }
-
-                            _guiController.registerCircle(agentBody);
-
-                            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + i, DeliveryAgent.class.getName(), new Object[] {agentBody});
-                            newDeliveryAgent.start();
-                            _guiController.DoList.add(newDeliveryAgent.getName());
-                        } catch (StaleProxyException e) {
-                            e.printStackTrace();
-                        }
-
+                        addNewDeliveryAgent(Integer.parseInt(line.get(i+1)));
                     }
                     break;
 
