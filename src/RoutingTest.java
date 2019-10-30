@@ -359,7 +359,7 @@ public class RoutingTest {
                 allAgents.add(agentManager);
             }
             //reset dataModel for data.demands
-            data.demands = List.copyOf(demandsCopy);
+            data.demands = new ArrayList<>(List.copyOf(demandsCopy));
         }
         double bestAverage = 999999999;
         Integer bestIndex = 999999999;
