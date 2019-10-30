@@ -1,9 +1,6 @@
-import com.google.ortools.sat.IntegerArgumentProto;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /*
 Initial Search Iteration
@@ -16,38 +13,7 @@ with constraints.
 
  */
 
-public class RoutingTest {
-
-    static class DataModel {
-        public final double[][] distanceMatrix = {
-                {0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354, 468, 776, 662},
-                {548, 0, 684, 308, 194, 502, 730, 354, 696, 742, 1084, 594, 480, 674, 1016, 868, 1210},
-                {776, 684, 0, 992, 878, 502, 274, 810, 468, 742, 400, 1278, 1164, 1130, 788, 1552, 754},
-                {696, 308, 992, 0, 114, 650, 878, 502, 844, 890, 1232, 514, 628, 822, 1164, 560, 1358},
-                {582, 194, 878, 114, 0, 536, 764, 388, 730, 776, 1118, 400, 514, 708, 1050, 674, 1244},
-                {274, 502, 502, 650, 536, 0, 228, 308, 194, 240, 582, 776, 662, 628, 514, 1050, 708},
-                {502, 730, 274, 878, 764, 228, 0, 536, 194, 468, 354, 1004, 890, 856, 514, 1278, 480},
-                {194, 354, 810, 502, 388, 308, 536, 0, 342, 388, 730, 468, 354, 320, 662, 742, 856},
-                {308, 696, 468, 844, 730, 194, 194, 342, 0, 274, 388, 810, 696, 662, 320, 1084, 514},
-                {194, 742, 742, 890, 776, 240, 468, 388, 274, 0, 342, 536, 422, 388, 274, 810, 468},
-                {536, 1084, 400, 1232, 1118, 582, 354, 730, 388, 342, 0, 878, 764, 730, 388, 1152, 354},
-                {502, 594, 1278, 514, 400, 776, 1004, 468, 810, 536, 878, 0, 114, 308, 650, 274, 844},
-                {388, 480, 1164, 628, 514, 662, 890, 354, 696, 422, 764, 114, 0, 194, 536, 388, 730},
-                {354, 674, 1130, 822, 708, 628, 856, 320, 662, 388, 730, 308, 194, 0, 342, 422, 536},
-                {468, 1016, 788, 1164, 1050, 514, 514, 662, 320, 274, 388, 650, 536, 342, 0, 764, 194},
-                {776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274, 388, 422, 764, 0, 798},
-                {662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730, 536, 194, 798, 0},
-        };
-        public final int vehicleNumber = 3;
-        //demand of each node 0 for 0 as that is our depot, and 1 for every other node location because we want to visit
-        //them once only
-        public List<Integer> demands = Arrays.asList(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
-        //vehicle capacity not extending weight yet
-        public final int[] vehicleCapacities = {250, 200, 250};
-        public final int depot = 0;
-        public final int[] parcelWeight = {0, 75, 50, 20, 40, 15, 5, 25, 42, 22, 48, 18, 32, 15, 55, 40, 42};
-    }
-
+public class RoutingV2 {
     //updating Route class to represent delivery vehicles
     //to contain more information for searching
     static class Agent {
@@ -91,10 +57,10 @@ public class RoutingTest {
 
         public void GetDistanceMedian(DataModel pData) {
             double temp = 0;
-            for (int i = 0; i < pData.distanceMatrix[0].length; i++) {
-                temp += pData.distanceMatrix[0][i];
+            for (int i = 0; i < pData.getDistanceMatrixSize(); i++) {
+                temp += pData.getDistance(0, i);
             }
-            distanceMean = temp / pData.distanceMatrix[0].length;
+            distanceMean = temp / pData.getDistanceMatrixSize();
         }
     }
 
@@ -102,7 +68,7 @@ public class RoutingTest {
     public static List<Integer> NearbyDomain(double pRange, DataModel pData, List<Integer> pDomain, Integer pLoc) {
         List<Integer> nearbyDomain = new ArrayList<>();
         for (int i = 0; i < pDomain.size(); i++) {
-            if (pData.distanceMatrix[pLoc][pDomain.get(i)] < pRange) {
+            if (pData.getDistance(pLoc, pDomain.get(i)) < pRange) {
                 nearbyDomain.add(pDomain.get(i));
             }
         }
@@ -129,21 +95,21 @@ public class RoutingTest {
             //use pDomain to cycle through and cut domain to avoid altering .size() causing errors
             for (int d = 0; d < pDomain.size(); d++) {
                 //parcel weight in the domain > vehicle capacity
-                if (pAgents.get(i).load < pData.parcelWeight[pDomain.get(d)]) {
+                if (pAgents.get(i).load < pData.getParcelWeight(pDomain.get(d))) {
                     //remove it from the search domain
                     domain.remove(pDomain.get(d));
                 }
             }
             for (int j = 0; j < domain.size(); j++) {
                 //current loc of any driver should not be in pDomain as it is visited, besides 0
-                double current = pData.distanceMatrix[pLoc.get(i)][domain.get(j)];
+                double current = pData.getDistance(pLoc.get(i), domain.get(j));
                 //add in negativeDomain effects of vehicles other than i (current agent)
                 for (int n = 0; n < pAgents.size(); n++) {
                     //not ur own negativeDomain
                     if (n != i) {
                         if (pAgents.get(n).negativeDomain.contains(domain.get(j))) {
                             //Formula used 1 - nearbyVehicleDistanceToLoc / DistanceMean gets our % that is high when distance is close for deterrence and low when its further for encouraging incentive
-                            double nearbyVehicleDistance = pData.distanceMatrix[pLoc.get(n)][domain.get(j)];
+                            double nearbyVehicleDistance = pData.getDistance(pLoc.get(n), domain.get(j));
                             double nearbyVehicleMulti = 1 - (nearbyVehicleDistance/pSearchVar.distanceMean);
                             current += pSearchVar.negativeMulti * pSearchVar.distanceMean *nearbyVehicleMulti;
                         }
@@ -178,11 +144,11 @@ public class RoutingTest {
             List<Integer> priority = new ArrayList<>();
             agent.positiveDomain.clear();
             for (int i = 0; i < pDomain.size(); i++) {
-                if ((pData.parcelWeight[pDomain.get(i)] * 3) >= agent.load) {
+                if ((pData.getParcelWeight(pDomain.get(i)) * 3) >= agent.load) {
                     priority.add(pDomain.get(i));
                 }
             }
-            //if priority list>0 search taht they are close add to positive Domain of agent
+            //if priority list>0 search that they are close add to positive Domain of agent
             if (priority.size() > 0)
                 agent.positiveDomain.addAll(NearbyDomain(pSearchVar.positiveDomain * pSearchVar.distanceMean, pData, priority, agent.route.get(agent.route.size() - 1)));
         }
@@ -199,20 +165,20 @@ public class RoutingTest {
                 if (best == 999999999)
                 {
                     best = i;
-                    cost = pData.distanceMatrix[pAgents.get(i).route.get(pAgents.get(i).route.size() - 1)][pPaths.get(i)];
-                } else if (pData.distanceMatrix[pAgents.get(i).route.get(pAgents.get(i).route.size() - 1)][pPaths.get(i)] < cost) {
+                    cost = pData.getDistance(pAgents.get(i).route.get(pAgents.get(i).route.size() - 1), pPaths.get(i));
+                } else if (pData.getDistance(pAgents.get(i).route.get(pAgents.get(i).route.size() - 1), pPaths.get(i)) < cost) {
                     best = i;
-                    cost = pData.distanceMatrix[pAgents.get(i).route.get(pAgents.get(i).route.size() - 1)][pPaths.get(i)];
+                    cost = pData.getDistance(pAgents.get(i).route.get(pAgents.get(i).route.size() - 1), pPaths.get(i));
                 }
             }
         }
         if (best != 999999999) {
             //apply the best index route add routeCost first as it uses last route.
-            pAgents.get(best).routeCost += pData.distanceMatrix[pAgents.get(best).route.get(pAgents.get(best).route.size() - 1)][pPaths.get(best)];
+            pAgents.get(best).routeCost += pData.getDistance(pAgents.get(best).route.get(pAgents.get(best).route.size() - 1), pPaths.get(best));
             pAgents.get(best).route.add(pPaths.get(best));
             //update demands lists in data
-            pData.demands.set(pPaths.get(best), 0);
-            pAgents.get(best).load -= pData.parcelWeight[pPaths.get(best)];
+            pData.getDemands().set(pPaths.get(best), 0);
+            pAgents.get(best).load -= pData.getParcelWeight(pPaths.get(best));
         }
     }
 
@@ -221,16 +187,16 @@ public class RoutingTest {
     {
         //initialize RouteManager List wiht 3 new Routes, add depot as first route location
         List<Agent> agentManager = new ArrayList<>();
-        for (int i = 0; i < data.vehicleNumber; i++) {
-            Agent temp = new Agent(i, data.depot, data.vehicleCapacities[i]);
+        for (int i = 0; i < data.getNumberOfVehicles(); i++) {
+            Agent temp = new Agent(i, data.getDepot(), data.getVehicleCapacity(i));
             agentManager.add(temp);
         }
         //get demanding deliveries
-        while (data.demands.contains(1)) {
+        while (data.getDemands().contains(1)) {
             List<Integer> currentLoc = new ArrayList<>();
             List<Integer> domain = new ArrayList<>();
-            for (int i = 0; i < data.demands.size(); i++) {
-                if (data.demands.get(i) == 1) {
+            for (int i = 0; i < data.getDemands().size(); i++) {
+                if (data.getDemands().get(i) == 1) {
                     domain.add(i);
                 }
             }
@@ -277,7 +243,7 @@ public class RoutingTest {
         for higher accuracy.
          */
         //search only fails when left over locations weight > individual vehicle's load but not load total
-        if (pData.demands.contains(1))
+        if (pData.getDemands().contains(1))
         {
             if (pSearchVar.positiveMulti < 2)
             {
@@ -294,7 +260,7 @@ public class RoutingTest {
             }
         }
         //completed search play with changes to spread of vehicles
-        else if(!pData.demands.contains(1))
+        else if(!pData.getDemands().contains(1))
         {
             //reset positiveMulti/Domain
             pSearchVar.positiveDomain = .5;
@@ -345,7 +311,6 @@ public class RoutingTest {
 
     public static List<List<Integer>> VehicleRouting(DataModel pData) {
         DataModel data = pData;
-        List<Integer> demandsCopy = List.copyOf(data.demands);
         SearchVar searchVar = new SearchVar(data);
         List<List<Agent>> allAgents = new ArrayList<>();
         while(allAgents.size() < 250)
@@ -354,12 +319,12 @@ public class RoutingTest {
             //evaluate search variables alter searchVar
             EvaluateSearch(agentManager,searchVar, data);
             //successful search
-            if(!data.demands.contains(1))
+            if(!data.getDemands().contains(1))
             {
                 allAgents.add(agentManager);
             }
             //reset dataModel for data.demands
-            data.demands = new ArrayList<>(List.copyOf(demandsCopy));
+            data.resetDemands();
         }
         double bestAverage = 999999999;
         Integer bestIndex = 999999999;
@@ -395,13 +360,40 @@ public class RoutingTest {
     public static void UpdateAgents(List<Agent> pRM, Integer pI, Integer pNewLoc, DataModel pData) {
         //update routeCost from current last routeindex to pNewLoc
         int temp = pRM.get(pI).route.size() - 1;
-        pRM.get(pI).routeCost += pData.distanceMatrix[temp][pNewLoc];
+        pRM.get(pI).routeCost += pData.getDistance(temp, pNewLoc);
         pRM.get(pI).route.add(pNewLoc);
     }
 
 
     public static void main(String[] args) {
-        DataModel data = new DataModel();
+        List<List<Double>> distanceMatrix = new ArrayList<>();
+        distanceMatrix.add(Arrays.asList(0d, 548d, 776d, 696d, 582d, 274d, 502d, 194d, 308d, 194d, 536d, 502d, 388d, 354d, 468d, 776d, 662d));
+        distanceMatrix.add(Arrays.asList(548d, 0d, 684d, 308d, 194d, 502d, 730d, 354d, 696d, 742d, 1084d, 594d, 480d, 674d, 1016d, 868d, 1210d));
+        distanceMatrix.add(Arrays.asList(776d, 684d, 0d, 992d, 878d, 502d, 274d, 810d, 468d, 742d, 400d, 1278d, 1164d, 1130d, 788d, 1552d, 754d));
+        distanceMatrix.add(Arrays.asList(696d, 308d, 992d, 0d, 114d, 650d, 878d, 502d, 844d, 890d, 1232d, 514d, 628d, 822d, 1164d, 560d, 1358d));
+        distanceMatrix.add(Arrays.asList(582d, 194d, 878d, 114d, 0d, 536d, 764d, 388d, 730d, 776d, 1118d, 400d, 514d, 708d, 1050d, 674d, 1244d));
+        distanceMatrix.add(Arrays.asList(274d, 502d, 502d, 650d, 536d, 0d, 228d, 308d, 194d, 240d, 582d, 776d, 662d, 628d, 514d, 1050d, 708d));
+        distanceMatrix.add(Arrays.asList(502d, 730d, 274d, 878d, 764d, 228d, 0d, 536d, 194d, 468d, 354d, 1004d, 890d, 856d, 514d, 1278d, 480d));
+        distanceMatrix.add(Arrays.asList(194d, 354d, 810d, 502d, 388d, 308d, 536d, 0d, 342d, 388d, 730d, 468d, 354d, 320d, 662d, 742d, 856d));
+        distanceMatrix.add(Arrays.asList(308d, 696d, 468d, 844d, 730d, 194d, 194d, 342d, 0d, 274d, 388d, 810d, 696d, 662d, 320d, 1084d, 514d));
+        distanceMatrix.add(Arrays.asList(194d, 742d, 742d, 890d, 776d, 240d, 468d, 388d, 274d, 0d, 342d, 536d, 422d, 388d, 274d, 810d, 468d));
+        distanceMatrix.add(Arrays.asList(536d, 1084d, 400d, 1232d, 1118d, 582d, 354d, 730d, 388d, 342d, 0d, 878d, 764d, 730d, 388d, 1152d, 354d));
+        distanceMatrix.add(Arrays.asList(502d, 594d, 1278d, 514d, 400d, 776d, 1004d, 468d, 810d, 536d, 878d, 0d, 114d, 308d, 650d, 274d, 844d));
+        distanceMatrix.add(Arrays.asList(388d, 480d, 1164d, 628d, 514d, 662d, 890d, 354d, 696d, 422d, 764d, 114d, 0d, 194d, 536d, 388d, 730d));
+        distanceMatrix.add(Arrays.asList(354d, 674d, 1130d, 822d, 708d, 628d, 856d, 320d, 662d, 388d, 730d, 308d, 194d, 0d, 342d, 422d, 536d));
+        distanceMatrix.add(Arrays.asList(468d, 1016d, 788d, 1164d, 1050d, 514d, 514d, 662d, 320d, 274d, 388d, 650d, 536d, 342d, 0d, 764d, 194d));
+        distanceMatrix.add(Arrays.asList(776d, 868d, 1552d, 560d, 674d, 1050d, 1278d, 742d, 1084d, 810d, 1152d, 274d, 388d, 422d, 764d, 0d, 798d));
+        distanceMatrix.add(Arrays.asList(662d, 1210d, 754d, 1358d, 1244d, 708d, 480d, 856d, 514d, 468d, 354d, 844d, 730d, 536d, 194d, 798d, 0d));
+
+        List<Integer> demands = Arrays.asList(0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
+        DataModel data = new DataModel(
+                distanceMatrix,
+                3,
+                demands,
+                Arrays.asList(250, 200, 250),
+                0,
+                Arrays.asList(0,75,50,20,40,15,5,25,42,22,48,18,32,15,55,40,42)
+        );
         List<List<Integer>> routes = VehicleRouting(data);
         for (int i = 0; i < routes.size(); i++) {
             System.out.println("Results:"+i+routes.get(i));

@@ -175,14 +175,14 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
 
     private void SendRoutes() throws IOException {
         List<AID> deliveryAgents = getDeliveryAgents();
-        List<Routing.Routes> newRoute;
-        Routing VRPRoute = new Routing();
+        List<List<Integer>> newRoute;
         GetCapacity(deliveryAgents);
 
         List<Integer> demands = new ArrayList<>();
         _distanceMatrix.forEach(doubles -> demands.add(0));
 
         List<Integer> parcelWeight = new ArrayList<>();
+        _distanceMatrix.forEach(distance -> parcelWeight.add(0));
         for (Parcel parcel : _allParcel) {
             Optional<Node> destination = _allNodes.stream()
                     .filter(node -> node.amI(parcel.getDestination()))
@@ -190,11 +190,11 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             if (destination.isPresent()) {
                int index = _allNodes.indexOf(destination.get());
                 demands.add(index, 1);
-                parcelWeight.add(parcel.getWeight());
+                parcelWeight.add(index, parcel.getWeight());
             }
         }
 
-        Routing.DataModel dataModel = new Routing.DataModel(
+        DataModel dataModel = new DataModel(
                 _distanceMatrix,
                 deliveryAgents.size(),
                 demands,
@@ -206,15 +206,18 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         //TODO: Generate the routes from the Routing class and send them to each delivery agent
         //TODO: Loop currently sends one test route to each delivery agent
 
-        newRoute = VRPRoute.VRP(dataModel);
+        newRoute = RoutingV2.VehicleRouting(dataModel);
 
         for (int i =0;i<deliveryAgents.size();i++)
         {
+            if (newRoute.get(i).size() < 1) {
+                continue;
+            }
             List<Node> testRoute = new ArrayList<Node>();
 
             AID agent = deliveryAgents.get(i);
 
-            for (int nodePos : newRoute.get(i).route)
+            for (int nodePos : newRoute.get(i))
             {
                 testRoute.add(_allNodes.get(nodePos));
             }
