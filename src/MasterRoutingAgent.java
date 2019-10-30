@@ -80,12 +80,12 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         AID myID = getAID(); //This method to get the identity of //agents such as (Name , address , host ....etc)
         for (AMSAgentDescription agent : agents) {
             AID agentID = agent.getName();
-            if (!agentID.equals(myID) && !agentID.equals("ams@10.0.0.132:8888/JADE") && !agentID.equals("MasterRoutingAgent@10.0.0.132:8888/JADE")&& !agentID.equals("df@10.0.0.132:8888/JADE"))
+            //if (!agentID.equals(myID) && !agentID.equals("ams@10.0.0.132:8888/JADE") && !agentID.equals("MasterRoutingAgent@10.0.0.132:8888/JADE")&& !agentID.equals("df@10.0.0.132:8888/JADE"))
             //{
-            //if (agentID.getName().matches("d/d*"))
+            if (agentID.getName().matches("^d/d+@.*$"))
             {
-                System.out.println(agentID.getName());
                 deliveryAgents.add(agentID);
+                System.out.println(deliveryAgents.size());
             }
         }
 

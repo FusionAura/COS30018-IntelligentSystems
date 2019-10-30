@@ -49,8 +49,8 @@ public class DeliveryAgent extends Agent
                     } else if (msg.getOntology().equals(MasterRoutingAgent.GET_CAPACITIY_REQUSET_ONTOLOGY)) {
                         ACLMessage response = new ACLMessage(ACLMessage.INFORM);
                         response.setOntology(MasterRoutingAgent.GET_CAPACITY_RESPONSE_ONTOLOGY);
-                        System.out.print(msg.getContent());
                         response.setContent(String.valueOf(_capacity)+","+msg.getContent());
+                        System.out.print(response);
                         response.addReceiver(msg.getSender());
 
                         send(response);
