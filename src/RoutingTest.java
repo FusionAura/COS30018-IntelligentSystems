@@ -44,7 +44,7 @@ public class RoutingTest {
         //them once only
         public List<Integer> demands = Arrays.asList(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         //vehicle capacity not extending weight yet
-        public final int[] vehicleCapacities = {200, 200, 200};
+        public final int[] vehicleCapacities = {250, 200, 250};
         public final int depot = 0;
         public final int[] parcelWeight = {0, 75, 50, 20, 40, 15, 5, 25, 42, 22, 48, 18, 32, 15, 55, 40, 42};
         public final int packages = this.distanceMatrix.length;
@@ -79,13 +79,15 @@ public class RoutingTest {
         public double positiveDomain;
         public double negativeMulti;
         public double positiveMulti;
+        public boolean reverse;
 
         public SearchVar(DataModel pData) {
             GetDistanceMedian(pData);
-            negativeDomain = 1;
+            negativeDomain = .1;
             positiveDomain = .5;
-            negativeMulti = .01;
-            positiveMulti = .1;
+            negativeMulti = .5;
+            positiveMulti = .2;
+            reverse = false;
         }
 
 
@@ -98,7 +100,7 @@ public class RoutingTest {
         }
     }
 
-//    //making a copy first backup
+////    //making a copy first backup
 //    static class Route {
 //        public int vehicleID;
 //        public List<Integer> route;
@@ -113,9 +115,9 @@ public class RoutingTest {
 //            route.add(pStartingLoc);
 //        }
 //    }
-
-//    public static List<Routes> VRP() {
-//        List<Routes> RoutingManager = new ArrayList<>();
+//
+//    public static List<Route> BestSet() {
+//        List<Route> RoutingManager = new ArrayList<>();
 //        DataModel data = new DataModel();
 //        //get the ideal best route fastest route considering packages total / car total
 //        //vehicles must return to depot thus extra distance added at the end
@@ -128,7 +130,7 @@ public class RoutingTest {
 //        //Searching loop start
 //        while (test > 0) {
 //            //creating/initializing vars to be used for our search
-//            Routes route = new Routes();
+//            Route route = new Route();
 //            boolean found = false;
 //            List<Integer> currentRoute = new ArrayList<>();
 //            currentRoute.clear();
@@ -240,13 +242,11 @@ public class RoutingTest {
             //Weight constraint check to refine our domain space to pick
             List<Integer> domain = new ArrayList<>();
             domain.addAll(pDomain);
-            //System.out.println("car:"+i+ " load:"+pAgents.get(i).load + "dom:"+domain);
             //use pDomain to cycle through and cut domain to avoid altering .size() causing errors
             for (int d = 0; d < pDomain.size(); d++) {
                 //parcel weight in the domain > vehicle capacity
                 if (pAgents.get(i).load < pData.parcelWeight[pDomain.get(d)]) {
                     //remove it from the search domain
-                    //System.out.println("removing weight domain:"+ pDomain.get(d));
                     domain.remove(pDomain.get(d));
                 }
             }
@@ -258,8 +258,10 @@ public class RoutingTest {
                     //not ur own negativeDomain
                     if (n != i) {
                         if (pAgents.get(n).negativeDomain.contains(domain.get(j))) {
-                            //System.out.println("negativeDomain increase:" + n + " domJ:" + domain.get(j));
-                            current += pSearchVar.negativeMulti * pSearchVar.distanceMean;
+                            //Formula used 1 - nearbyVehicleDistanceToLoc / DistanceMean gets our % that is high when distance is close for deterrence and low when its further for encouraging incentive
+                            double nearbyVehicleDistance = pData.distanceMatrix[pLoc.get(n)][domain.get(j)];
+                            double nearbyVehicleMulti = 1 - (nearbyVehicleDistance/pSearchVar.distanceMean);
+                            current += pSearchVar.negativeMulti * pSearchVar.distanceMean *nearbyVehicleMulti;
                         }
                     }
                 }
@@ -514,31 +516,78 @@ public class RoutingTest {
         //do some evaluation of the search results and alter psearchVar for stricter weight/no nearby vehicles.
         /*
         Lots of free space/load on vehicles reduce priority on heavy parcels
+        to be continued to reverse step through each variable to test both ways for each set of variables.
+        for higher accuracy.
          */
         //search only fails when left over locations weight > individual vehicle's load but not load total
         if (pData.demands.contains(1))
         {
-            if (pSearchVar.positiveMulti < 1)
+            if (pSearchVar.positiveMulti < 2)
             {
                 pSearchVar.positiveMulti += .1;
                 System.out.println("Failed search increasing positiveMulti:"+pSearchVar.positiveMulti);
             }
-            else if(pSearchVar.positiveMulti >= 1)
+            else if(pSearchVar.positiveMulti >= 2)
             {
-                if(pSearchVar.positiveDomain <= 2)
+                if(pSearchVar.positiveDomain <= 2.5)
                 {
                     pSearchVar.positiveDomain += .1;
                     System.out.println("Failed search increasing positiveDom:"+pSearchVar.positiveDomain);
+                    //reset positiveMulti to cycle searches again with increased range
+                    pSearchVar.positiveMulti = .1;
                 }
             }
         }
         //completed search play with changes to spread of vehicles
         else if(!pData.demands.contains(1))
         {
-            if (pSearchVar.negativeMulti < 1)
+            //reset positiveMulti/Domain
+            pSearchVar.positiveDomain = .5;
+            pSearchVar.positiveMulti = .3;
+            //search by increasing deterrence and incentive values first
+            if (!pSearchVar.reverse)
             {
-                pSearchVar.negativeMulti += .1;
-                System.out.println("Altering search increasing negativeMulti:"+pSearchVar.negativeMulti);
+                if (pSearchVar.negativeMulti < 5)
+                {
+                    pSearchVar.negativeMulti += .25;
+                    System.out.println("Altering search increasing negativeMulti:"+pSearchVar.negativeMulti);
+                }
+                else if (pSearchVar.negativeMulti >=5)
+                {
+                    if(pSearchVar.negativeDomain <= 2.5)
+                    {
+                        pSearchVar.negativeDomain += .1;
+                        System.out.println("Altering search increasing negativeDomain:"+pSearchVar.negativeDomain);
+                        //reset negativeMulti
+                        pSearchVar.negativeMulti = .5;
+                    }
+                }
+                if(pSearchVar.negativeMulti >= 5 && pSearchVar.negativeDomain>=2.5)
+                {
+                    System.out.println("ReverseSearch");
+                    //reverse search and reset the values
+                    pSearchVar.reverse = true;
+                    pSearchVar.negativeMulti = .5;
+                    pSearchVar.negativeDomain = .1;
+                }
+            }
+            //search going from increasing Radius first
+            else if(pSearchVar.reverse)
+            {
+                if (pSearchVar.negativeDomain < 2.5)
+                {
+                    pSearchVar.negativeDomain += .1;
+                    System.out.println("Reverse Altering search increasing negativeDomain:"+pSearchVar.negativeDomain);
+                }
+                else if (pSearchVar.negativeDomain >=2.5)
+                {
+                    if(pSearchVar.negativeMulti <= 5)
+                    {
+                        System.out.println("Reverse Altering search increasing negativeMulti:"+pSearchVar.negativeMulti);
+                        pSearchVar.negativeMulti += .25;
+                        pSearchVar.negativeDomain = .1;
+                    }
+                }
             }
         }
 
@@ -548,7 +597,7 @@ public class RoutingTest {
         DataModel data = new DataModel();
         SearchVar searchVar = new SearchVar(data);
         List<List<Agent>> allAgents = new ArrayList<>();
-        while(allAgents.size() < 10)
+        while(allAgents.size() < 250)
         {
             List<Agent> agentManager = SearchRoutes(data, searchVar);
             //evaluate search variables alter searchVar
@@ -556,6 +605,10 @@ public class RoutingTest {
             //successful search
             if(!data.demands.contains(1))
             {
+//                for(Agent agent : agentManager)
+//                {
+//                    System.out.println("agent"+agent+":"+agent.route + agent.routeCost);
+//                }
                 allAgents.add(agentManager);
             }
             //reset dataModel for data.demands
