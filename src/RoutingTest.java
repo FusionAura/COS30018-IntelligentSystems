@@ -341,8 +341,8 @@ public class RoutingTest {
 
     }
 
-    public static List<List<Integer>> VehicleRouting() {
-        DataModel data = new DataModel();
+    public static List<List<Integer>> VehicleRouting(DataModel pData) {
+        data = pData;
         SearchVar searchVar = new SearchVar(data);
         List<List<Agent>> allAgents = new ArrayList<>();
         while(allAgents.size() < 250)
@@ -398,7 +398,8 @@ public class RoutingTest {
 
 
     public static void main(String[] args) {
-        List<List<Integer>> routes = VehicleRouting();
+        DataModel data = new DataModel();
+        List<List<Integer>> routes = VehicleRouting(data);
         for (int i = 0; i < routes.size(); i++) {
             System.out.println("Results:"+i+routes.get(i));
         }
