@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -49,7 +48,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
                         }
                     }
                 }
-                block();
+                //block();
             }
         };
         addBehaviour(msgListenBehaviour);
@@ -78,11 +77,15 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         }
         List<AID> deliveryAgents = new ArrayList<>();
 
-        AID myID = getAID(); //This method to get the identity of //agents such as (Name , adress , host ....etc)
+        AID myID = getAID(); //This method to get the identity of //agents such as (Name , address , host ....etc)
         for (AMSAgentDescription agent : agents) {
             AID agentID = agent.getName();
-            if (!agentID.equals(myID)) {
+            //if (!agentID.equals(myID) && !agentID.equals("ams@10.0.0.132:8888/JADE") && !agentID.equals("MasterRoutingAgent@10.0.0.132:8888/JADE")&& !agentID.equals("df@10.0.0.132:8888/JADE"))
+            //{
+            if (agentID.getName().matches("^d\\d+@.*$"))
+            {
                 deliveryAgents.add(agentID);
+                System.out.println(deliveryAgents.size());
             }
         }
 
@@ -148,13 +151,16 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     }
 
     private void GetCapacity(List<AID> deliveryAgents) {
-        for (AID agent : deliveryAgents) {
+        _vehicleCapacity.clear();
+        for(int i = 0; i <deliveryAgents.size(); i++)
+        {
+            _vehicleCapacity.add(0);
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             msg.setLanguage("English");
-
             msg.setOntology(GET_CAPACITIY_REQUSET_ONTOLOGY);
-            msg.addReceiver(agent);
-
+            msg.addReceiver(deliveryAgents.get(i));
+            msg.setContent(String.valueOf(i));
+            System.out.print(msg);
             send(msg);
         }
 
@@ -173,7 +179,9 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         Routing VRPRoute = new Routing();
         GetCapacity(deliveryAgents);
 
-        List<Integer> demands = new ArrayList<>(_distanceMatrix.size());
+        List<Integer> demands = new ArrayList<>();
+        _distanceMatrix.forEach(doubles -> demands.add(0));
+
         List<Integer> parcelWeight = new ArrayList<>();
         for (Parcel parcel : _allParcel) {
             Optional<Node> destination = _allNodes.stream()

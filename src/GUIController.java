@@ -13,21 +13,14 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
-import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.collections.ObservableList;
-import javafx.collections.FXCollections;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.scene.shape.*;
 import javafx.scene.layout.*;
-import javafx.scene.control.*;
 import javafx.scene.Scene;
-import javafx.scene.text.TextAlignment;
-
-import java.util.*;
 
 public class GUIController implements Initializable {
     //List View variables.
