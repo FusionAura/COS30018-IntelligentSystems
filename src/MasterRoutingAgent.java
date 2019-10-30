@@ -48,7 +48,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
                         }
                     }
                 }
-                block();
+                //block();
             }
         };
         addBehaviour(msgListenBehaviour);
@@ -82,7 +82,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             AID agentID = agent.getName();
             //if (!agentID.equals(myID) && !agentID.equals("ams@10.0.0.132:8888/JADE") && !agentID.equals("MasterRoutingAgent@10.0.0.132:8888/JADE")&& !agentID.equals("df@10.0.0.132:8888/JADE"))
             //{
-            if (agentID.getName().matches("^d/d+@.*$"))
+            if (agentID.getName().matches("^d\\d+@.*$"))
             {
                 deliveryAgents.add(agentID);
                 System.out.println(deliveryAgents.size());
@@ -151,8 +151,10 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     }
 
     private void GetCapacity(List<AID> deliveryAgents) {
+        _vehicleCapacity.clear();
         for(int i = 0; i <deliveryAgents.size(); i++)
         {
+            _vehicleCapacity.add(0);
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             msg.setLanguage("English");
             msg.setOntology(GET_CAPACITIY_REQUSET_ONTOLOGY);
@@ -177,7 +179,9 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         Routing VRPRoute = new Routing();
         GetCapacity(deliveryAgents);
 
-        List<Integer> demands = new ArrayList<>(_distanceMatrix.size());
+        List<Integer> demands = new ArrayList<>();
+        _distanceMatrix.forEach(doubles -> demands.add(0));
+
         List<Integer> parcelWeight = new ArrayList<>();
         for (Parcel parcel : _allParcel) {
             Optional<Node> destination = _allNodes.stream()
