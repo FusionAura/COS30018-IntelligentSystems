@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -148,13 +147,16 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     }
 
     private void GetCapacity(List<AID> deliveryAgents) {
-        for (AID agent : deliveryAgents) {
+
+        for(int i = 0; i <deliveryAgents.size(); i++)
+        {
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             msg.setLanguage("English");
-
             msg.setOntology(GET_CAPACITIY_REQUSET_ONTOLOGY);
-            msg.addReceiver(agent);
+            msg.addReceiver(deliveryAgents.get(i));
 
+
+            //System.out.print(msg);
             send(msg);
         }
 
