@@ -77,10 +77,14 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         }
         List<AID> deliveryAgents = new ArrayList<>();
 
-        AID myID = getAID(); //This method to get the identity of //agents such as (Name , adress , host ....etc)
+        AID myID = getAID(); //This method to get the identity of //agents such as (Name , address , host ....etc)
         for (AMSAgentDescription agent : agents) {
             AID agentID = agent.getName();
-            if (!agentID.equals(myID)) {
+            if (!agentID.equals(myID) && !agentID.equals("ams@10.0.0.132:8888/JADE") && !agentID.equals("MasterRoutingAgent@10.0.0.132:8888/JADE")&& !agentID.equals("df@10.0.0.132:8888/JADE"))
+            //{
+            //if (agentID.getName().matches("d/d*"))
+            {
+                System.out.println(agentID.getName());
                 deliveryAgents.add(agentID);
             }
         }
@@ -147,16 +151,14 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     }
 
     private void GetCapacity(List<AID> deliveryAgents) {
-
         for(int i = 0; i <deliveryAgents.size(); i++)
         {
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             msg.setLanguage("English");
             msg.setOntology(GET_CAPACITIY_REQUSET_ONTOLOGY);
             msg.addReceiver(deliveryAgents.get(i));
-
-
-            //System.out.print(msg);
+            msg.setContent(String.valueOf(i));
+            System.out.print(msg);
             send(msg);
         }
 

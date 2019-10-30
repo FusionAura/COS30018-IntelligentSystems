@@ -50,10 +50,8 @@ public class DeliveryAgent extends Agent
                         ACLMessage response = new ACLMessage(ACLMessage.INFORM);
                         response.setOntology(MasterRoutingAgent.GET_CAPACITY_RESPONSE_ONTOLOGY);
                         System.out.print(msg.getContent());
-                        response.setContent(String.valueOf(_capacity + msg.getContent()));
+                        response.setContent(String.valueOf(_capacity)+","+msg.getContent());
                         response.addReceiver(msg.getSender());
-
-
 
                         send(response);
                     }
