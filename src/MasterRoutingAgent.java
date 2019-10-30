@@ -16,8 +16,8 @@ import jade.lang.acl.ACLMessage;
 public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInterface
 {
     public static final String DELIVERY_ROUTE_ONTOLOGY = "delivery-route";
-    public static String GET_CAPACITIY_REQUSET_ONTOLOGY = "capacity-request";
-    public static String GET_CAPACITY_RESPONSE_ONTOLOGY = "capacitiy-response";
+    public static String GET_CAPACITY_REQUEST_ONTOLOGY = "capacity-request";
+    public static String GET_CAPACITY_RESPONSE_ONTOLOGY = "capacity-response";
 
     private List<Integer> _vehicleCapacity = new ArrayList<>();
     private Position _position = new Position(100, 100);
@@ -26,20 +26,16 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     private Integer _responses = 0;
     private List<Parcel> _allParcel = new ArrayList<Parcel>();
 
-    protected void setup()
-    {
+    protected void setup() {
         //https://stackoverflow.com/questions/28652869/how-to-get-agents-on-all-containers-jade
         registerO2AInterface(MasterRoutingAgentInterface.class, this);
 
         // Setting up message listener so that it can recieve messages from other agents
-        CyclicBehaviour msgListenBehaviour = new CyclicBehaviour(this)
-        {
+        CyclicBehaviour msgListenBehaviour = new CyclicBehaviour(this) {
 
-            public void action()
-            {
+            public void action() {
                 ACLMessage msg = receive();
-                if(msg!=null)
-                {
+                if(msg!=null) {
                     if (msg.getOntology().equals(GET_CAPACITY_RESPONSE_ONTOLOGY)) {
                         synchronized (_responses) {
                             _responses++;
@@ -67,11 +63,9 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         AMSAgentDescription[] agents;
         try {
             SearchConstraints c = new SearchConstraints();
-            c.setMaxResults ( new Long(-1) );
+            c.setMaxResults (-1L);
             agents = AMSService.search( this, new AMSAgentDescription(), c );
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             System.out.println( "Problem searching AMS: " + e );
             e.printStackTrace();
             agents = new AMSAgentDescription[]{};
@@ -119,12 +113,12 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     public synchronized void removeNode(Node node) {
         int position = _allNodes.indexOf(node);
         if (position >= 0) {
-            RemoveNode(position);
+            removeNode(position);
         }
     }
 
     // Notify that a node has been removed and update the distance matrix
-    public void RemoveNode(int position) {
+    public void removeNode(int position) {
         // Remove all distances for the node in the given position
         for (int i = 0; i < _distanceMatrix.size(); i++) {
             if (i == position) {
@@ -141,18 +135,18 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     @Override
     public void startRouting() {
         try {
-            SendRoutes();
+            sendRoutes();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void GetCapacity(List<AID> deliveryAgents) {
+    private void getCapacity(List<AID> deliveryAgents) {
         for (AID agent : deliveryAgents) {
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             msg.setLanguage("English");
 
-            msg.setOntology(GET_CAPACITIY_REQUSET_ONTOLOGY);
+            msg.setOntology(GET_CAPACITY_REQUEST_ONTOLOGY);
             msg.addReceiver(agent);
 
             send(msg);
@@ -167,11 +161,11 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         }
     }
 
-    private void SendRoutes() throws IOException {
+    private void sendRoutes() throws IOException {
         List<AID> deliveryAgents = getDeliveryAgents();
         List<Routing.Routes> newRoute;
         Routing VRPRoute = new Routing();
-        GetCapacity(deliveryAgents);
+        getCapacity(deliveryAgents);
 
         List<Integer> demands = new ArrayList<>(_distanceMatrix.size());
         List<Integer> parcelWeight = new ArrayList<>();
@@ -212,7 +206,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             }
 
             MessageObject msgObject = new MessageObject();
-            msgObject.SetRoute(testRoute);
+            msgObject.setRoute(testRoute);
 
             ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
             msg.setLanguage("English");

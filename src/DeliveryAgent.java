@@ -3,8 +3,6 @@ import jade.core.behaviours.*;
 import jade.lang.acl.*;
 import javafx.animation.SequentialTransition;
 import javafx.animation.TranslateTransition;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
@@ -18,7 +16,6 @@ public class DeliveryAgent extends Agent
     private int _capacity;
     private boolean _isTraveling = false;
     private Circle _body = null;
-    private int _radius = 400; //in meters, same as distance matrix
 
     protected void setup()
     {
@@ -38,15 +35,15 @@ public class DeliveryAgent extends Agent
                             try {
                                 System.out.println("Delivery route message received!");
                                 MessageObject msgObject = (MessageObject) msg.getContentObject();
-                                _route = msgObject.GetRoute();
+                                _route = msgObject.getRoute();
                                 System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getY());
                                 System.out.println("Delivery route successfully added!");
-                                FollowRoute();
+                                followRoute();
                             } catch (UnreadableException e) {
                                 e.printStackTrace();
                             }
                         }
-                    } else if (msg.getOntology().equals(MasterRoutingAgent.GET_CAPACITIY_REQUSET_ONTOLOGY)) {
+                    } else if (msg.getOntology().equals(MasterRoutingAgent.GET_CAPACITY_REQUEST_ONTOLOGY)) {
                         ACLMessage response = new ACLMessage(ACLMessage.INFORM);
                         response.setOntology(MasterRoutingAgent.GET_CAPACITY_RESPONSE_ONTOLOGY);
                         response.setContent(String.valueOf(_capacity));
@@ -66,7 +63,7 @@ public class DeliveryAgent extends Agent
     }
 
     // When this method is called, the delivery agent moves towards its next destination by deltaTime (if it has one)
-    public void FollowRoute() {
+    private void followRoute() {
         if (_route.size() == 0 || _body == null) {
             return;
         }
@@ -76,8 +73,6 @@ public class DeliveryAgent extends Agent
         for (int i = 0; i < _route.size(); i++) {
             Node thisNode = _route.get(i);
             Node nextNode = _route.size() == i + 1 ? _route.get(0) : _route.get(i + 1);
-
-            //TODO -- Update delivery agent's current position node
 
             double xTransition = nextNode.getX() - thisNode.getX();
             double yTransition = nextNode.getY() - thisNode.getY();
@@ -91,14 +86,11 @@ public class DeliveryAgent extends Agent
 
             transitions.add(transition);
         }
-        synchronized (DeliveryAgent.class) {
-            SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[transitions.size()]));
-            sequentialTransition.onFinishedProperty().set(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent actionEvent) {
-                    _isTraveling = false;
-                }
-            });
+
+        // SequentialTransitions must be created one at a time
+        synchronized (SequentialTransition.class) {
+            SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[0]));
+            sequentialTransition.onFinishedProperty().set(actionEvent -> _isTraveling = false);
             sequentialTransition.play();
         }
     }

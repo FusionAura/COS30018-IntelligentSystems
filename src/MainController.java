@@ -8,9 +8,7 @@ import java.util.List;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
-import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.ListView;
 import javafx.scene.paint.Color;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -20,14 +18,12 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 public class MainController extends Application {
-    @FXML
-    public ListView _agentList;
-
     private List<Node> _nodes = new ArrayList<>();
     private List<Parcel> _parcels = new ArrayList<>();
     private GUIController _guiController;
     private AgentController _mainAgentController;
     private ContainerController _mainCtrl;
+    private int _agentNumber = 0;
 
 
     private Color[] _deliveryColors = {
@@ -79,11 +75,8 @@ public class MainController extends Application {
         _guiController.registerCircle(new Circle(100, 100, 10, Color.CHOCOLATE));
         
         readFromConfigFile();
-
-        //Populate GUI ListView
-        _guiController.PopulateAgentList();
         
-        _guiController.MainClass = this;
+        _guiController.setMainController(this);
     }
 
     public void runAction() {
@@ -101,8 +94,7 @@ public class MainController extends Application {
     }
 
 
-    public static void main (String[] args) throws StaleProxyException
-    {
+    public static void main (String[] args) {
         launch(args);
     }
 
@@ -116,12 +108,13 @@ public class MainController extends Application {
 
             _guiController.registerCircle(agentBody);
 
-            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + (_guiController.DoList.size()+1), DeliveryAgent.class.getName(), new Object[] {agentBody, capacity});
+            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + _agentNumber, DeliveryAgent.class.getName(), new Object[] {agentBody, capacity});
             newDeliveryAgent.start();
+            _agentNumber++;
 
-            _guiController.DoList.add(newDeliveryAgent.getName());
+            _guiController.registerAgent(newDeliveryAgent.getName());
           
-            } catch (StaleProxyException e) {
+        } catch (StaleProxyException e) {
               e.printStackTrace();
         }
     }
@@ -165,9 +158,8 @@ public class MainController extends Application {
     }
 
     public void removeDeliveryAgent(int index)  {
-        try
-        {
-            String agentName = _guiController.DoList.get(index).toString();
+        try {
+            String agentName = _guiController.unregisterAgent(index);
             _mainCtrl.getAgent(agentName.substring(0, agentName.indexOf("@"))).kill();
         }
         catch (ControllerException e) {

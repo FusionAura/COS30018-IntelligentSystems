@@ -4,108 +4,68 @@ import java.util.*;
 
 import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
-import javafx.event.ActionEvent;
 
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
-import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.collections.ObservableList;
-import javafx.collections.FXCollections;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.scene.shape.*;
 import javafx.scene.layout.*;
-import javafx.scene.control.*;
-import javafx.scene.Scene;
-import javafx.scene.text.TextAlignment;
-
-import java.util.*;
 
 public class GUIController implements Initializable {
     //List View variables.
-    public MainController MainClass;
+    private MainController _mainController;
     @FXML
-    public Text AgentNum;
+    private Text _agentNumber;
     @FXML
-    public ListView AgentsList;
+    private ListView _agentListView;
     @FXML
-    public ListView ParcelList;
-
-    @FXML
-    public Button createAgentButton;
-
-    @FXML
-    public Button deleteAgentButton;
-
-    @FXML
-    private AnchorPane apMain;
+    private ListView _parcelListView;
 
     //Draw map on this pane
     @FXML
-    private Pane mapPane;
+    private Pane _mapPane;
 
     @FXML
-    public ObservableList<Object> DoList = FXCollections.observableArrayList();
+    private ObservableList<String> _agentList = FXCollections.observableArrayList();
     @FXML
-    private ObservableList<Parcel> _parcelViewList = FXCollections.observableArrayList();
-
-    public Scene scene;
+    private ObservableList<Parcel> _parcelList = FXCollections.observableArrayList();
 
     private Map<Circle, Text> _circleReference = new HashMap<>();
     private Circle _highlightedNode = null;
     private Paint _highlightedNodeColor = null;
 
     public void initialize(URL url, ResourceBundle rb) {
-        createAgentButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-               AddNewAgentWindow();
-            }
-        });
-
-        deleteAgentButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                DeleteDeliveryAgentWindow();
-            }
-        });
-
-        mapPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
+        _mapPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
                 EventTarget target = mouseEvent.getTarget();
-                if (target == mapPane) {
-                    AddNewNodeWindow(mouseEvent);
+                if (target == _mapPane) {
+                    addNewNodeWindow(mouseEvent);
                 } else {
                     Circle circleTarget = (Circle) target;
                     if (_circleReference.containsKey(circleTarget)) {
-                        HighlightNode(circleTarget);
+                        highlightNode(circleTarget);
                     }
                 }
             }
         });
 
-        ParcelList.setItems(_parcelViewList);
+        _parcelListView.setItems(_parcelList);
+        _agentListView.setItems(_agentList);
     }
 
-    @FXML
-    public void createAgent(Event e)
-    {
-        //create agent here
-
-        RefreshGUI();
+    public void setMainController(MainController mainController) {
+        _mainController = mainController;
     }
 
-    public void AddNewAgentWindow()
-    {
+    public void addNewAgentWindow() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("New delivery agent");
         dialog.setHeaderText("Creating new delivery agent");
@@ -118,11 +78,10 @@ public class GUIController implements Initializable {
             Optional<String> response = dialog.showAndWait();
             if (response.isPresent()) {
                 String potentialCapacity = response.get();
-                if(potentialCapacity.isBlank())
-                {
+
+                if(potentialCapacity.isBlank()) {
                     showMessageWindow(Alert.AlertType.ERROR, "ERROR", "Please enter a capacity");
-                }
-                else {
+                } else {
                     try {
                         capacity = Integer.parseInt(potentialCapacity);
                         capacityGotten = true;
@@ -130,24 +89,20 @@ public class GUIController implements Initializable {
                         showMessageWindow(Alert.AlertType.ERROR, "ERROR", "Please enter a value for the capacity");
                     }
                 }
-            }
-            else
-            {
+            } else {
                 return;
             }
-        }while(!capacityGotten);
+        } while(!capacityGotten);
 
-        MainClass.addNewDeliveryAgent(capacity);
-        PopulateAgentList();
+        _mainController.addNewDeliveryAgent(capacity);
 
         showMessageWindow(Alert.AlertType.INFORMATION, "Success", "New delivery agent added");
     }
 
-    public void DeleteDeliveryAgentWindow()
-    {
-        int index = AgentsList.getSelectionModel().getSelectedIndex();
+    public void deleteDeliveryAgentWindow() {
+        int index = _agentListView.getSelectionModel().getSelectedIndex();
 
-        if (index<0||index>=DoList.size()) {
+        if (index<0||index>= _agentList.size()) {
             showMessageWindow(Alert.AlertType.WARNING, "WARNING", "Please select a delivery agent first");
             return;
         }
@@ -159,22 +114,14 @@ public class GUIController implements Initializable {
 
         Optional<ButtonType> result = confirmation.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            MainClass.removeDeliveryAgent(index);
-            DoList.remove(index);
-            PopulateAgentList();
+            _mainController.removeDeliveryAgent(index);
             showMessageWindow(Alert.AlertType.INFORMATION, "Success", "Delivery agent deleted.");
         }
     }
 
     @FXML
-    public void PopulateAgentList()
-    {
-        AgentsList.setItems(FXCollections.observableList(DoList));
-    }
-
-    @FXML
     public void runButton() {
-        MainClass.runAction();
+        _mainController.runAction();
     }
 
     @FXML
@@ -236,14 +183,14 @@ public class GUIController implements Initializable {
         } while (!descriptionGotten);
 
         Parcel parcel = new Parcel(weight, _circleReference.get(_highlightedNode).getText(), description);
-        MainClass.addParcel(parcel);
+        _mainController.addParcel(parcel);
 
         showMessageWindow(Alert.AlertType.INFORMATION, "Success", "New Parcel Added!");
     }
 
     @FXML
     public void removeParcelWindow() {
-        Parcel selectedParcel = (Parcel) ParcelList.getSelectionModel().getSelectedItem();
+        Parcel selectedParcel = (Parcel) _parcelListView.getSelectionModel().getSelectedItem();
         if (selectedParcel == null) {
             showMessageWindow(Alert.AlertType.WARNING, "WARNING", "Please select a parcel first");
             return;
@@ -256,20 +203,25 @@ public class GUIController implements Initializable {
 
         Optional<ButtonType> result = confirmation.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            MainClass.removeParcel(selectedParcel);
+            _mainController.removeParcel(selectedParcel);
 
             showMessageWindow(Alert.AlertType.INFORMATION, "Success", "Parcel deleted.");
         }
     }
 
-    public void RefreshGUI()
-    {
-        AgentNum.setText(String.valueOf(DoList.size()-1));
-        AgentsList.setItems(FXCollections.observableList(DoList));
+    public void registerAgent(String agentName) {
+        _agentList.add(agentName);
+        _agentNumber.setText(String.valueOf(_agentList.size()-1));
+    }
+
+    public String unregisterAgent(int index) {
+        String agentName = _agentList.get(index);
+        _agentList.remove(index);
+        return agentName;
     }
 
     public void registerCircle(Circle newCircle) {
-        mapPane.getChildren().add(newCircle);
+        _mapPane.getChildren().add(newCircle);
     }
 
     // Use this method if you want to refer to that circle later
@@ -281,27 +233,27 @@ public class GUIController implements Initializable {
         text.setX(newCircle.getCenterX() - text.getBoundsInLocal().getWidth()/2);
         text.setY(newCircle.getCenterY() - text.getBoundsInLocal().getHeight()/2);
 
-        mapPane.getChildren().addAll(newCircle, text);
+        _mapPane.getChildren().addAll(newCircle, text);
         _circleReference.put(newCircle, text);
     }
 
     public void registerParcel(Parcel parcel) {
-        _parcelViewList.add(parcel);
+        _parcelList.add(parcel);
     }
 
     public void unregisterParcel(Parcel parcel) {
-        _parcelViewList.remove(parcel);
+        _parcelList.remove(parcel);
     }
 
-    public void AddNewNodeWindow(MouseEvent mouseEvent) {
+    public void addNewNodeWindow(MouseEvent mouseEvent) {
         double centerX = mouseEvent.getX();
         double centerY = mouseEvent.getY();
         int size = 5;
 
         Line tempLine1 = new Line(centerX + size, centerY + size, centerX - size, centerY - size);
         Line tempLine2 = new Line(centerX - size, centerY + size, centerX + size, centerY - size);
-        mapPane.getChildren().add(tempLine1);
-        mapPane.getChildren().add(tempLine2);
+        _mapPane.getChildren().add(tempLine1);
+        _mapPane.getChildren().add(tempLine2);
 
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("New Node");
@@ -319,22 +271,22 @@ public class GUIController implements Initializable {
             String newName = result.get();
             if (newName.isBlank()) {
                 showMessageWindow(Alert.AlertType.ERROR, "ERROR", "Please enter a name for the new node.");
-            } else if (MainClass.doesNodeExist(newName)) {
+            } else if (_mainController.doesNodeExist(newName)) {
                 showMessageWindow(Alert.AlertType.ERROR, "ERROR", "That name has already been taken. Please enter a different one.");
             } else {
-                MainClass.addNode(newName, new Position(centerX, centerY));
+                _mainController.addNode(newName, new Position(centerX, centerY));
                 showMessageWindow(Alert.AlertType.INFORMATION, "Success", "New node created");
 
                 isDone = true;
             }
         } while (!isDone);
 
-        mapPane.getChildren().remove(tempLine1);
-        mapPane.getChildren().remove(tempLine2);
+        _mapPane.getChildren().remove(tempLine1);
+        _mapPane.getChildren().remove(tempLine2);
 
     }
 
-    public void RemoveNodeWindow() {
+    public void removeNodeWindow() {
         if (_highlightedNode == null) {
             showMessageWindow(Alert.AlertType.WARNING, "WARNING", "Please select a node first.");
             return;
@@ -348,11 +300,11 @@ public class GUIController implements Initializable {
         Optional<ButtonType> result = confirmation.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             //First, remove all parcels associated with that node
-            for (int i = 0; i < _parcelViewList.size();) {
-                Parcel parcel = _parcelViewList.get(i);
+            for (int i = 0; i < _parcelList.size();) {
+                Parcel parcel = _parcelList.get(i);
                 if (parcel.getDestination().equals(_circleReference.get(_highlightedNode))) {
-                    MainClass.removeParcel(parcel);
-                    _parcelViewList.remove(parcel);
+                    _mainController.removeParcel(parcel);
+                    _parcelList.remove(parcel);
                 } else {
                     //Increment the counter if we did not delete a parcel
                     //If we did delete a parcel then i will point to the next parcel
@@ -362,10 +314,10 @@ public class GUIController implements Initializable {
 
             Text textToRemove = _circleReference.get(_highlightedNode);
 
-            MainClass.removeNode(textToRemove.getText());
+            _mainController.removeNode(textToRemove.getText());
             _circleReference.remove(_highlightedNode);
 
-            mapPane.getChildren().removeAll(_highlightedNode, textToRemove);
+            _mapPane.getChildren().removeAll(_highlightedNode, textToRemove);
 
             _highlightedNode = null;
             _highlightedNodeColor = null;
@@ -374,7 +326,7 @@ public class GUIController implements Initializable {
         }
     }
 
-    public void HighlightNode(Circle circle) {
+    public void highlightNode(Circle circle) {
         if (_highlightedNode != null) {
             _highlightedNode.setFill(_highlightedNodeColor);
             _circleReference.get(_highlightedNode).setFill(Color.BLACK);
@@ -386,7 +338,7 @@ public class GUIController implements Initializable {
         _circleReference.get(_highlightedNode).setFill(Color.RED);
     }
 
-    public void Quit()
+    public void quit()
     {
         System.exit(0);
     }
