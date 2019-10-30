@@ -13,8 +13,7 @@ import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 
-public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInterface
-{
+public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInterface {
     public static final String DELIVERY_ROUTE_ONTOLOGY = "delivery-route";
     public static String GET_CAPACITY_REQUEST_ONTOLOGY = "capacity-request";
     public static String GET_CAPACITY_RESPONSE_ONTOLOGY = "capacity-response";
@@ -37,7 +36,8 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
                 ACLMessage msg = receive();
                 if(msg!=null) {
                     if (msg.getOntology().equals(GET_CAPACITY_RESPONSE_ONTOLOGY)) {
-                        synchronized (_responses) {
+                        // Make sure to do each message one at a time
+                        synchronized (MasterRoutingAgent.class) {
                             _responses++;
                             // id,capacity
                             String[] response = msg.getContent().split(",");
@@ -50,13 +50,8 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         };
         addBehaviour(msgListenBehaviour);
 
+        //Register this as a node
         newNode(new Node("warehouse", _position));
-    }
-    public void addParcel(Parcel p) {
-        _allParcel.add(p);
-    }
-    public void removeParcel(Parcel p) {
-        _allParcel.remove(p);
     }
 
     private List<AID> getDeliveryAgents() {
@@ -83,6 +78,80 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         return deliveryAgents;
     }
 
+    @Override
+    public void startRouting() {
+        try {
+            sendRoutes();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // This method first sets up the data model
+    // Then it creates routes based on the routing algorithm
+    // Finally, it sends each route to their respective agent
+    private void sendRoutes() throws IOException {
+        // Setup data model
+        List<AID> deliveryAgents = getDeliveryAgents();
+        Routing VRPRoute = new Routing();
+        getCapacity(deliveryAgents);
+
+        List<Integer> demands = new ArrayList<>(_distanceMatrix.size());
+        List<Integer> parcelWeight = new ArrayList<>();
+        for (Parcel parcel : _allParcel) {
+            Optional<Node> destination = _allNodes.stream()
+                    .filter(node -> node.amI(parcel.getDestination()))
+                    .findFirst();
+            if (destination.isPresent()) {
+                int index = _allNodes.indexOf(destination.get());
+                demands.add(index, 1);
+                parcelWeight.add(parcel.getWeight());
+            }
+        }
+
+        Routing.DataModel dataModel = new Routing.DataModel(
+                _distanceMatrix,
+                deliveryAgents.size(),
+                demands,
+                _vehicleCapacity,
+                0,
+                parcelWeight
+        );
+
+        //Create the routes
+        List<Routing.Routes> routes = VRPRoute.VRP(dataModel);
+
+        for (int i = 0; i < deliveryAgents.size(); i++) {
+            List<Node> route = new ArrayList<Node>();
+
+            AID agent = deliveryAgents.get(i);
+
+            // Convert the indexs into nodes that we can follow
+            for (int nodePos : routes.get(i).route) {
+                route.add(_allNodes.get(nodePos));
+            }
+
+            MessageObject msgObject = new MessageObject();
+            msgObject.setRoute(route);
+
+            ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+            msg.setLanguage("English");
+
+            msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
+
+            msg.setContentObject(msgObject);
+            msg.addReceiver(agent);
+
+            send(msg);
+        }
+    }
+
+    public void addParcel(Parcel p) {
+        _allParcel.add(p);
+    }
+    public void removeParcel(Parcel p) {
+        _allParcel.remove(p);
+    }
     @Override
     // Notify that a new node has been created and update the distance matrix
     public synchronized void newNode(Node newNode) {
@@ -132,15 +201,8 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         _allNodes.remove(position);
     }
 
-    @Override
-    public void startRouting() {
-        try {
-            sendRoutes();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
+    // Sends a request to each given agent and waits until all agents respond
+    // This assumes that all agents will respond
     private void getCapacity(List<AID> deliveryAgents) {
         for (AID agent : deliveryAgents) {
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
@@ -161,66 +223,8 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         }
     }
 
-    private void sendRoutes() throws IOException {
-        List<AID> deliveryAgents = getDeliveryAgents();
-        List<Routing.Routes> newRoute;
-        Routing VRPRoute = new Routing();
-        getCapacity(deliveryAgents);
-
-        List<Integer> demands = new ArrayList<>(_distanceMatrix.size());
-        List<Integer> parcelWeight = new ArrayList<>();
-        for (Parcel parcel : _allParcel) {
-            Optional<Node> destination = _allNodes.stream()
-                    .filter(node -> node.amI(parcel.getDestination()))
-                    .findFirst();
-            if (destination.isPresent()) {
-               int index = _allNodes.indexOf(destination.get());
-                demands.add(index, 1);
-                parcelWeight.add(parcel.getWeight());
-            }
-        }
-
-        Routing.DataModel dataModel = new Routing.DataModel(
-                _distanceMatrix,
-                deliveryAgents.size(),
-                demands,
-                _vehicleCapacity,
-                0,
-                parcelWeight
-        );
-
-        //TODO: Generate the routes from the Routing class and send them to each delivery agent
-        //TODO: Loop currently sends one test route to each delivery agent
-
-        newRoute = VRPRoute.VRP(dataModel);
-
-        for (int i =0;i<deliveryAgents.size();i++)
-        {
-            List<Node> testRoute = new ArrayList<Node>();
-
-            AID agent = deliveryAgents.get(i);
-
-            for (int nodePos : newRoute.get(i).route)
-            {
-                testRoute.add(_allNodes.get(nodePos));
-            }
-
-            MessageObject msgObject = new MessageObject();
-            msgObject.setRoute(testRoute);
-
-            ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-            msg.setLanguage("English");
-
-            msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
-
-            msg.setContentObject(msgObject);
-            msg.addReceiver(agent);
-
-
-
-
-            send(msg);
-        }
+    public List<List<Double>> getDistanceMatrix() {
+        return _distanceMatrix;
     }
     
     //MEANT ONLY FOR TESTING DISTANCE MATRIX
@@ -241,9 +245,5 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             }
             System.out.println("]");
         }
-    }
-
-    public List<List<Double>> getDistanceMatrix() {
-        return _distanceMatrix;
     }
 }

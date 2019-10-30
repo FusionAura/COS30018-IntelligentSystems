@@ -25,7 +25,6 @@ public class MainController extends Application {
     private ContainerController _mainCtrl;
     private int _agentNumber = 0;
 
-
     private Color[] _deliveryColors = {
             Color.BLUE,
             Color.GREEN,
@@ -62,7 +61,6 @@ public class MainController extends Application {
         System.out.println(MainController.class.getName() + ": Launching the platform Main Container...");
         Profile pMain = new ProfileImpl(null, 8888, null);
 
-        //pMain.setParameter(Profile.GUI, "true");
         _mainCtrl = rt.createMainContainer(pMain);
 
 
@@ -93,11 +91,9 @@ public class MainController extends Application {
         }
     }
 
-
-    public static void main (String[] args) {
-        launch(args);
-    }
-
+    /*
+        Adding and Removing objects
+     */
     public void addNewDeliveryAgent(int capacity) {
         try {
             Circle agentBody = new Circle(100, 100, 5, _deliveryColors[_deliveryColorPosition]);
@@ -116,6 +112,16 @@ public class MainController extends Application {
           
         } catch (StaleProxyException e) {
               e.printStackTrace();
+        }
+    }
+
+    public void removeDeliveryAgent(int index)  {
+        try {
+            String agentName = _guiController.unregisterAgent(index);
+            _mainCtrl.getAgent(agentName.substring(0, agentName.indexOf("@"))).kill();
+        }
+        catch (ControllerException e) {
+            e.printStackTrace();
         }
     }
 
@@ -157,16 +163,6 @@ public class MainController extends Application {
         }
     }
 
-    public void removeDeliveryAgent(int index)  {
-        try {
-            String agentName = _guiController.unregisterAgent(index);
-            _mainCtrl.getAgent(agentName.substring(0, agentName.indexOf("@"))).kill();
-        }
-        catch (ControllerException e) {
-          e.printStackTrace();
-        }
-    }
-
     public void removeParcel(Parcel parcel) {
         _parcels.remove(parcel);
         _guiController.unregisterParcel(parcel);
@@ -182,6 +178,8 @@ public class MainController extends Application {
         return _nodes.stream().anyMatch(node -> node.amI(name));
     }
 
+    // Loads the default configuration from the config file
+    // Each line will have a letter denoting what setting it will be, followed by the values for that setting
     private void readFromConfigFile() {
         CSVFileReader reader = new CSVFileReader();
         List<List<String>> output = reader.readFromFile("app.config");

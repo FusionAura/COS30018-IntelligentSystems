@@ -9,26 +9,22 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeliveryAgent extends Agent
-{
+public class DeliveryAgent extends Agent {
     private List<Node> _route = new ArrayList<Node>();
     private double _speed = 20;
     private int _capacity;
     private boolean _isTraveling = false;
     private Circle _body = null;
 
-    protected void setup()
-    {
-        addBehaviour(new CyclicBehaviour(this)
-        {
-            public void action()
-            {
+    protected void setup() {
+        addBehaviour(new CyclicBehaviour(this) {
+            public void action() {
                 ACLMessage msg = receive();
-                if(msg!=null)
-                {
-                    //Ontology check exists if we need to send different types of messages
-                    if(msg.getOntology().equals(MasterRoutingAgent.DELIVERY_ROUTE_ONTOLOGY))
-                    {
+
+                if(msg!=null) {
+                    if(msg.getOntology().equals(MasterRoutingAgent.DELIVERY_ROUTE_ONTOLOGY)) {
+
+                        //Can't follow a route if we're travelling
                         if (_isTraveling) {
                             System.out.println("Got a route, but I'm Travelling! Ignoring...");
                         } else {
@@ -43,6 +39,7 @@ public class DeliveryAgent extends Agent
                                 e.printStackTrace();
                             }
                         }
+
                     } else if (msg.getOntology().equals(MasterRoutingAgent.GET_CAPACITY_REQUEST_ONTOLOGY)) {
                         ACLMessage response = new ACLMessage(ACLMessage.INFORM);
                         response.setOntology(MasterRoutingAgent.GET_CAPACITY_RESPONSE_ONTOLOGY);

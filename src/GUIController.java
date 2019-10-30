@@ -65,6 +65,50 @@ public class GUIController implements Initializable {
         _mainController = mainController;
     }
 
+    @FXML
+    public void runButton() {
+        _mainController.runAction();
+    }
+
+    /*
+        Adding and removing object functions
+     */
+    public void registerAgent(String agentName) {
+        _agentList.add(agentName);
+        _agentNumber.setText(String.valueOf(_agentList.size()-1));
+    }
+
+    public String unregisterAgent(int index) {
+        String agentName = _agentList.get(index);
+        _agentList.remove(index);
+        return agentName;
+    }
+
+    public void registerCircle(Circle newCircle) {
+        _mapPane.getChildren().add(newCircle);
+    }
+
+    // Use this method if you want to refer to that circle later
+    public void registerCircle(Circle newCircle, String reference) {
+        newCircle.setPickOnBounds(false);
+
+        Text text = new Text(reference);
+        text.setMouseTransparent(true);
+        text.setX(newCircle.getCenterX() - text.getBoundsInLocal().getWidth()/2);
+        text.setY(newCircle.getCenterY() - text.getBoundsInLocal().getHeight()/2);
+
+        _mapPane.getChildren().addAll(newCircle, text);
+        _circleReference.put(newCircle, text);
+    }
+
+    public void registerParcel(Parcel parcel) {
+        _parcelList.add(parcel);
+    }
+
+    public void unregisterParcel(Parcel parcel) {
+        _parcelList.remove(parcel);
+    }
+
     public void addNewAgentWindow() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("New delivery agent");
@@ -119,9 +163,97 @@ public class GUIController implements Initializable {
         }
     }
 
-    @FXML
-    public void runButton() {
-        _mainController.runAction();
+    public void highlightNode(Circle circle) {
+        if (_highlightedNode != null) {
+            _highlightedNode.setFill(_highlightedNodeColor);
+            _circleReference.get(_highlightedNode).setFill(Color.BLACK);
+        }
+        _highlightedNode = circle;
+        _highlightedNodeColor = circle.getFill();
+
+        _highlightedNode.setFill(Color.RED);
+        _circleReference.get(_highlightedNode).setFill(Color.RED);
+    }
+
+    public void addNewNodeWindow(MouseEvent mouseEvent) {
+        double centerX = mouseEvent.getX();
+        double centerY = mouseEvent.getY();
+        int size = 5;
+
+        Line tempLine1 = new Line(centerX + size, centerY + size, centerX - size, centerY - size);
+        Line tempLine2 = new Line(centerX - size, centerY + size, centerX + size, centerY - size);
+        _mapPane.getChildren().add(tempLine1);
+        _mapPane.getChildren().add(tempLine2);
+
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("New Node");
+        dialog.setHeaderText("Creating New Node");
+        dialog.setContentText("Please enter a name for the node:");
+
+        boolean isDone = false;
+        do {
+            Optional<String> result = dialog.showAndWait();
+            if (result.isEmpty()) {
+                isDone = true;
+                break;
+            }
+
+            String newName = result.get();
+            if (newName.isBlank()) {
+                showMessageWindow(Alert.AlertType.ERROR, "ERROR", "Please enter a name for the new node.");
+            } else if (_mainController.doesNodeExist(newName)) {
+                showMessageWindow(Alert.AlertType.ERROR, "ERROR", "That name has already been taken. Please enter a different one.");
+            } else {
+                _mainController.addNode(newName, new Position(centerX, centerY));
+                showMessageWindow(Alert.AlertType.INFORMATION, "Success", "New node created");
+
+                isDone = true;
+            }
+        } while (!isDone);
+
+        _mapPane.getChildren().remove(tempLine1);
+        _mapPane.getChildren().remove(tempLine2);
+
+    }
+
+    public void removeNodeWindow() {
+        if (_highlightedNode == null) {
+            showMessageWindow(Alert.AlertType.WARNING, "WARNING", "Please select a node first.");
+            return;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Deleting Node");
+        confirmation.setHeaderText(null);
+        confirmation.setContentText("Are you sure you want to delete the highlighted node? This will remove all parcels designed to go to that node!");
+
+        Optional<ButtonType> result = confirmation.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            //First, remove all parcels associated with that node
+            for (int i = 0; i < _parcelList.size();) {
+                Parcel parcel = _parcelList.get(i);
+                if (parcel.getDestination().equals(_circleReference.get(_highlightedNode))) {
+                    _mainController.removeParcel(parcel);
+                    _parcelList.remove(parcel);
+                } else {
+                    //Increment the counter if we did not delete a parcel
+                    //If we did delete a parcel then i will point to the next parcel
+                    i++;
+                }
+            }
+
+            Text textToRemove = _circleReference.get(_highlightedNode);
+
+            _mainController.removeNode(textToRemove.getText());
+            _circleReference.remove(_highlightedNode);
+
+            _mapPane.getChildren().removeAll(_highlightedNode, textToRemove);
+
+            _highlightedNode = null;
+            _highlightedNodeColor = null;
+
+            showMessageWindow(Alert.AlertType.INFORMATION, "Success", "Node deleted.");
+        }
     }
 
     @FXML
@@ -207,135 +339,6 @@ public class GUIController implements Initializable {
 
             showMessageWindow(Alert.AlertType.INFORMATION, "Success", "Parcel deleted.");
         }
-    }
-
-    public void registerAgent(String agentName) {
-        _agentList.add(agentName);
-        _agentNumber.setText(String.valueOf(_agentList.size()-1));
-    }
-
-    public String unregisterAgent(int index) {
-        String agentName = _agentList.get(index);
-        _agentList.remove(index);
-        return agentName;
-    }
-
-    public void registerCircle(Circle newCircle) {
-        _mapPane.getChildren().add(newCircle);
-    }
-
-    // Use this method if you want to refer to that circle later
-    public void registerCircle(Circle newCircle, String reference) {
-        newCircle.setPickOnBounds(false);
-
-        Text text = new Text(reference);
-        text.setMouseTransparent(true);
-        text.setX(newCircle.getCenterX() - text.getBoundsInLocal().getWidth()/2);
-        text.setY(newCircle.getCenterY() - text.getBoundsInLocal().getHeight()/2);
-
-        _mapPane.getChildren().addAll(newCircle, text);
-        _circleReference.put(newCircle, text);
-    }
-
-    public void registerParcel(Parcel parcel) {
-        _parcelList.add(parcel);
-    }
-
-    public void unregisterParcel(Parcel parcel) {
-        _parcelList.remove(parcel);
-    }
-
-    public void addNewNodeWindow(MouseEvent mouseEvent) {
-        double centerX = mouseEvent.getX();
-        double centerY = mouseEvent.getY();
-        int size = 5;
-
-        Line tempLine1 = new Line(centerX + size, centerY + size, centerX - size, centerY - size);
-        Line tempLine2 = new Line(centerX - size, centerY + size, centerX + size, centerY - size);
-        _mapPane.getChildren().add(tempLine1);
-        _mapPane.getChildren().add(tempLine2);
-
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("New Node");
-        dialog.setHeaderText("Creating New Node");
-        dialog.setContentText("Please enter a name for the node:");
-
-        boolean isDone = false;
-        do {
-            Optional<String> result = dialog.showAndWait();
-            if (result.isEmpty()) {
-                isDone = true;
-                break;
-            }
-
-            String newName = result.get();
-            if (newName.isBlank()) {
-                showMessageWindow(Alert.AlertType.ERROR, "ERROR", "Please enter a name for the new node.");
-            } else if (_mainController.doesNodeExist(newName)) {
-                showMessageWindow(Alert.AlertType.ERROR, "ERROR", "That name has already been taken. Please enter a different one.");
-            } else {
-                _mainController.addNode(newName, new Position(centerX, centerY));
-                showMessageWindow(Alert.AlertType.INFORMATION, "Success", "New node created");
-
-                isDone = true;
-            }
-        } while (!isDone);
-
-        _mapPane.getChildren().remove(tempLine1);
-        _mapPane.getChildren().remove(tempLine2);
-
-    }
-
-    public void removeNodeWindow() {
-        if (_highlightedNode == null) {
-            showMessageWindow(Alert.AlertType.WARNING, "WARNING", "Please select a node first.");
-            return;
-        }
-
-        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmation.setTitle("Deleting Node");
-        confirmation.setHeaderText(null);
-        confirmation.setContentText("Are you sure you want to delete the highlighted node? This will remove all parcels designed to go to that node!");
-
-        Optional<ButtonType> result = confirmation.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            //First, remove all parcels associated with that node
-            for (int i = 0; i < _parcelList.size();) {
-                Parcel parcel = _parcelList.get(i);
-                if (parcel.getDestination().equals(_circleReference.get(_highlightedNode))) {
-                    _mainController.removeParcel(parcel);
-                    _parcelList.remove(parcel);
-                } else {
-                    //Increment the counter if we did not delete a parcel
-                    //If we did delete a parcel then i will point to the next parcel
-                    i++;
-                }
-            }
-
-            Text textToRemove = _circleReference.get(_highlightedNode);
-
-            _mainController.removeNode(textToRemove.getText());
-            _circleReference.remove(_highlightedNode);
-
-            _mapPane.getChildren().removeAll(_highlightedNode, textToRemove);
-
-            _highlightedNode = null;
-            _highlightedNodeColor = null;
-
-            showMessageWindow(Alert.AlertType.INFORMATION, "Success", "Node deleted.");
-        }
-    }
-
-    public void highlightNode(Circle circle) {
-        if (_highlightedNode != null) {
-            _highlightedNode.setFill(_highlightedNodeColor);
-            _circleReference.get(_highlightedNode).setFill(Color.BLACK);
-        }
-        _highlightedNode = circle;
-        _highlightedNodeColor = circle.getFill();
-
-        _highlightedNode.setFill(Color.RED);
-        _circleReference.get(_highlightedNode).setFill(Color.RED);
     }
 
     public void quit()
