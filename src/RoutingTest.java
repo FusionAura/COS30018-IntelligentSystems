@@ -1,6 +1,9 @@
+import com.google.ortools.sat.IntegerArgumentProto;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /*
 Initial Search Iteration
@@ -43,7 +46,6 @@ public class RoutingTest {
         public final int[] vehicleCapacities = {250, 200, 250};
         public final int depot = 0;
         public final int[] parcelWeight = {0, 75, 50, 20, 40, 15, 5, 25, 42, 22, 48, 18, 32, 15, 55, 40, 42};
-        public final int packages = this.distanceMatrix.length;
     }
 
     //updating Route class to represent delivery vehicles
@@ -342,7 +344,8 @@ public class RoutingTest {
     }
 
     public static List<List<Integer>> VehicleRouting(DataModel pData) {
-        data = pData;
+        DataModel data = pData;
+        List<Integer> demandsCopy = List.copyOf(data.demands);
         SearchVar searchVar = new SearchVar(data);
         List<List<Agent>> allAgents = new ArrayList<>();
         while(allAgents.size() < 250)
@@ -356,7 +359,7 @@ public class RoutingTest {
                 allAgents.add(agentManager);
             }
             //reset dataModel for data.demands
-            data = new DataModel();
+            data.demands = List.copyOf(demandsCopy);
         }
         double bestAverage = 999999999;
         Integer bestIndex = 999999999;
