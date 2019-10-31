@@ -194,11 +194,6 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             }
         }
 
-        for(Integer i : parcelWeight)
-        {
-            System.out.println(i);
-        }
-
         DataModel dataModel = new DataModel(
                 _distanceMatrix,
                 deliveryAgents.size(),
@@ -212,7 +207,6 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         //TODO: Loop currently sends one test route to each delivery agent
 
         newRoute = RoutingV2.VehicleRouting(dataModel);
-
         for (int i =0;i<deliveryAgents.size();i++)
         {
             if (newRoute.get(i).size() < 1) {
