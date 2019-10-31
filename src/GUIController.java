@@ -274,8 +274,29 @@ public class GUIController implements Initializable {
         text.setX(newCircle.getCenterX() - text.getBoundsInLocal().getWidth()/2);
         text.setY(newCircle.getCenterY() - text.getBoundsInLocal().getHeight()/2);
 
-        mapPane.getChildren().addAll(newCircle, text);
+        if (!reference.matches("^d\\d$")) {
+            mapPane.getChildren().addAll(newCircle, text);
+        }
+        else
+        {
+            mapPane.getChildren().addAll(newCircle);
+        }
+
         _circleReference.put(newCircle, text);
+    }
+
+    public void deregisterCircle(String reference)
+    {
+        for(Circle c : _circleReference.keySet())
+        {
+            System.out.println(_circleReference.get(c).getText());
+            System.out.println(reference);
+            if(_circleReference.get(c).getText().equals(reference))
+            {
+                System.out.println("found");
+                mapPane.getChildren().remove(c);
+            }
+        }
     }
 
     public void registerParcel(Parcel parcel) {

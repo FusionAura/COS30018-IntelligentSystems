@@ -142,15 +142,16 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     }
 
     @Override
-    public void startRouting() {
+    public void startRouting(List<String> deliveryAgents) {
         try {
-            SendRoutes();
+            SendRoutes(deliveryAgents);
+            _responses = 0;
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void GetCapacity(List<AID> deliveryAgents) {
+    private void GetCapacity(List<String> deliveryAgents) {
         _vehicleCapacity.clear();
         for(int i = 0; i <deliveryAgents.size(); i++)
         {
@@ -158,7 +159,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             msg.setLanguage("English");
             msg.setOntology(GET_CAPACITIY_REQUSET_ONTOLOGY);
-            msg.addReceiver(deliveryAgents.get(i));
+            msg.addReceiver(new AID(deliveryAgents.get(i).toString(), AID.ISLOCALNAME));
             msg.setContent(String.valueOf(i));
             System.out.print(msg);
             send(msg);
@@ -173,8 +174,8 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         }
     }
 
-    private void SendRoutes() throws IOException {
-        List<AID> deliveryAgents = getDeliveryAgents();
+    private void SendRoutes(List<String> deliveryAgents) throws IOException {
+        //List<AID> deliveryAgents = getDeliveryAgents();
         List<List<Integer>> newRoute;
         GetCapacity(deliveryAgents);
 
@@ -215,7 +216,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             }
             List<Node> testRoute = new ArrayList<Node>();
 
-            AID agent = deliveryAgents.get(i);
+            String agent = deliveryAgents.get(i).toString();
 
             for (int nodePos : newRoute.get(i))
             {
@@ -231,7 +232,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             msg.setOntology(DELIVERY_ROUTE_ONTOLOGY);
 
             msg.setContentObject(msgObject);
-            msg.addReceiver(agent);
+            msg.addReceiver(new AID(agent, AID.ISLOCALNAME));
 
 
 
