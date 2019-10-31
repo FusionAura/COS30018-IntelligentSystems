@@ -125,7 +125,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         );
 
         //Create the routes
-        List<List<Integer>> routes = VRPRoute.VehicleRouting(dataModel);
+        List<List<Integer>> routes = VRPRoute.vehicleRouting(dataModel);
 
         for (int i = 0; i < deliveryAgents.size(); i++) {
             List<Node> route = new ArrayList<Node>();
