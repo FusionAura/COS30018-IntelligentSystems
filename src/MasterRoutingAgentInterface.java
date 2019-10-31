@@ -1,5 +1,7 @@
+import java.util.List;
+
 public interface MasterRoutingAgentInterface {
-    void startRouting();
+    void startRouting(List<String> deliveryAgents);
     void newNode(Node newNode);
     void removeNode(Node node);
     void addParcel(Parcel p);

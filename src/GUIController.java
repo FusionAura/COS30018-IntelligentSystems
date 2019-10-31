@@ -266,7 +266,7 @@ public class GUIController implements Initializable {
     }
 
     // Use this method if you want to refer to that circle later
-    public void registerCircle(Circle newCircle, String reference) {
+    public synchronized void registerCircle(Circle newCircle, String reference) {
         newCircle.setPickOnBounds(false);
 
         Text text = new Text(reference);
@@ -274,8 +274,27 @@ public class GUIController implements Initializable {
         text.setX(newCircle.getCenterX() - text.getBoundsInLocal().getWidth()/2);
         text.setY(newCircle.getCenterY() - text.getBoundsInLocal().getHeight()/2);
 
-        mapPane.getChildren().addAll(newCircle, text);
+        mapPane.getChildren().add(newCircle);
+
+        //Don't want to draw delivery agent names on map
+        //so we filter them out
+        if (!reference.matches("^d\\d$")) {
+            mapPane.getChildren().get(mapPane.getChildren().size()-1).toBack();
+            mapPane.getChildren().add(text);
+        }
+
         _circleReference.put(newCircle, text);
+    }
+
+    public void deregisterCircle(String reference)
+    {
+        for(Circle c : _circleReference.keySet())
+        {
+            if(_circleReference.get(c).getText().equals(reference))
+            {
+                mapPane.getChildren().remove(c);
+            }
+        }
     }
 
     public void registerParcel(Parcel parcel) {

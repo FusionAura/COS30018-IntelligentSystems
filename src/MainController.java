@@ -88,8 +88,14 @@ public class MainController extends Application {
 
     public void runAction() {
         try {
+            List<String> deliveryAgents = new ArrayList<String>();
+
+            for(Object o : _guiController.DoList)
+            {
+                deliveryAgents.add(o.toString().substring(0, o.toString().indexOf("@")));
+            }
             MasterRoutingAgentInterface masterRoutingAgentInterface = _mainAgentController.getO2AInterface(MasterRoutingAgentInterface.class);
-            masterRoutingAgentInterface.startRouting();
+            masterRoutingAgentInterface.startRouting(deliveryAgents);
 
             //After we run the algorithm, remove all the parcels (they're being delivered!)
             for (int i = 0; i < _parcels.size();) {
@@ -114,7 +120,8 @@ public class MainController extends Application {
                 _deliveryColorPosition = 0;
             }
 
-            _guiController.registerCircle(agentBody);
+            String agentBodyReference = "d"+(_guiController.DoList.size()+1);
+            _guiController.registerCircle(agentBody, agentBodyReference);
 
             AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + (_guiController.DoList.size()+1), DeliveryAgent.class.getName(), new Object[] {agentBody, capacity});
             newDeliveryAgent.start();
@@ -168,6 +175,8 @@ public class MainController extends Application {
         try
         {
             String agentName = _guiController.DoList.get(index).toString();
+            _guiController.deregisterCircle(agentName.substring(0, agentName.indexOf("@")));
+            _guiController.RefreshGUI();
             _mainCtrl.getAgent(agentName.substring(0, agentName.indexOf("@"))).kill();
         }
         catch (ControllerException e) {
