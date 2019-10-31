@@ -17,10 +17,6 @@ public class Parcel {
         return _weight;
     }
 
-    public String getDescription() {
-        return _description;
-    }
-
     @Override
     public String toString() {
         return _description.toUpperCase() + "\nWeight: " +_weight + "\nDestination: " + _destination;

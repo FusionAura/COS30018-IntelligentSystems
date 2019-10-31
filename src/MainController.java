@@ -8,9 +8,7 @@ import java.util.List;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
-import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.ListView;
 import javafx.scene.paint.Color;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -20,15 +18,12 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 public class MainController extends Application {
-    @FXML
-    public ListView _agentList;
-
     private List<Node> _nodes = new ArrayList<>();
     private List<Parcel> _parcels = new ArrayList<>();
     private GUIController _guiController;
     private AgentController _mainAgentController;
     private ContainerController _mainCtrl;
-
+    private int _agentNumber = 0;
 
     private Color[] _deliveryColors = {
             Color.BLUE,
@@ -66,7 +61,6 @@ public class MainController extends Application {
         System.out.println(MainController.class.getName() + ": Launching the platform Main Container...");
         Profile pMain = new ProfileImpl(null, 8888, null);
 
-        //pMain.setParameter(Profile.GUI, "true");
         _mainCtrl = rt.createMainContainer(pMain);
 
 
@@ -79,11 +73,8 @@ public class MainController extends Application {
         _guiController.registerCircle(new Circle(100, 100, 10, Color.CHOCOLATE));
         
         readFromConfigFile();
-
-        //Populate GUI ListView
-        _guiController.PopulateAgentList();
         
-        _guiController.MainClass = this;
+        _guiController.setMainController(this);
     }
 
     public void runAction() {
@@ -100,12 +91,9 @@ public class MainController extends Application {
         }
     }
 
-
-    public static void main (String[] args) throws StaleProxyException
-    {
-        launch(args);
-    }
-
+    /*
+        Adding and Removing objects
+     */
     public void addNewDeliveryAgent(int capacity) {
         try {
             Circle agentBody = new Circle(100, 100, 5, _deliveryColors[_deliveryColorPosition]);
@@ -116,13 +104,24 @@ public class MainController extends Application {
 
             _guiController.registerCircle(agentBody);
 
-            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + (_guiController.DoList.size()+1), DeliveryAgent.class.getName(), new Object[] {agentBody, capacity});
+            AgentController newDeliveryAgent= _mainCtrl.createNewAgent("d" + _agentNumber, DeliveryAgent.class.getName(), new Object[] {agentBody, capacity});
             newDeliveryAgent.start();
+            _agentNumber++;
 
-            _guiController.DoList.add(newDeliveryAgent.getName());
+            _guiController.registerAgent(newDeliveryAgent.getName());
           
-            } catch (StaleProxyException e) {
+        } catch (StaleProxyException e) {
               e.printStackTrace();
+        }
+    }
+
+    public void removeDeliveryAgent(int index)  {
+        try {
+            String agentName = _guiController.unregisterAgent(index);
+            _mainCtrl.getAgent(agentName.substring(0, agentName.indexOf("@"))).kill();
+        }
+        catch (ControllerException e) {
+            e.printStackTrace();
         }
     }
 
@@ -164,17 +163,6 @@ public class MainController extends Application {
         }
     }
 
-    public void removeDeliveryAgent(int index)  {
-        try
-        {
-            String agentName = _guiController.DoList.get(index).toString();
-            _mainCtrl.getAgent(agentName.substring(0, agentName.indexOf("@"))).kill();
-        }
-        catch (ControllerException e) {
-          e.printStackTrace();
-        }
-    }
-
     public void removeParcel(Parcel parcel) {
         _parcels.remove(parcel);
         _guiController.unregisterParcel(parcel);
@@ -190,6 +178,8 @@ public class MainController extends Application {
         return _nodes.stream().anyMatch(node -> node.amI(name));
     }
 
+    // Loads the default configuration from the config file
+    // Each line will have a letter denoting what setting it will be, followed by the values for that setting
     private void readFromConfigFile() {
         CSVFileReader reader = new CSVFileReader();
         List<List<String>> output = reader.readFromFile("app.config");

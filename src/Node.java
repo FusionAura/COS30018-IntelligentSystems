@@ -19,7 +19,8 @@ public class Node implements Serializable {
     public boolean amI(String name) {
         return name.equals(_name);
     }
-  
+
+    //  Circles aren't serializable so we just create the body here
     public Circle getBody() {
         Circle body = new Circle(_position.getX(), _position.getY(), 10, Color.GRAY);
         body.toBack();

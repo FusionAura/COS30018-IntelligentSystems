@@ -3,50 +3,44 @@ import jade.core.behaviours.*;
 import jade.lang.acl.*;
 import javafx.animation.SequentialTransition;
 import javafx.animation.TranslateTransition;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeliveryAgent extends Agent
-{
+public class DeliveryAgent extends Agent {
     private List<Node> _route = new ArrayList<Node>();
     private double _speed = 20;
     private int _capacity;
     private boolean _isTraveling = false;
     private Circle _body = null;
-    private int _radius = 400; //in meters, same as distance matrix
 
-    protected void setup()
-    {
-        addBehaviour(new CyclicBehaviour(this)
-        {
-            public void action()
-            {
+    protected void setup() {
+        addBehaviour(new CyclicBehaviour(this) {
+            public void action() {
                 ACLMessage msg = receive();
-                if(msg!=null)
-                {
-                    //Ontology check exists if we need to send different types of messages
-                    if(msg.getOntology().equals(MasterRoutingAgent.DELIVERY_ROUTE_ONTOLOGY))
-                    {
+
+                if(msg!=null) {
+                    if(msg.getOntology().equals(MasterRoutingAgent.DELIVERY_ROUTE_ONTOLOGY)) {
+
+                        //Can't follow a route if we're travelling
                         if (_isTraveling) {
                             System.out.println("Got a route, but I'm Travelling! Ignoring...");
                         } else {
                             try {
                                 System.out.println("Delivery route message received!");
                                 MessageObject msgObject = (MessageObject) msg.getContentObject();
-                                _route = msgObject.GetRoute();
+                                _route = msgObject.getRoute();
                                 System.out.println("First route node coordinates: "+_route.get(0).getX()+", "+_route.get(0).getY());
                                 System.out.println("Delivery route successfully added!");
-                                FollowRoute();
+                                followRoute();
                             } catch (UnreadableException e) {
                                 e.printStackTrace();
                             }
                         }
-                    } else if (msg.getOntology().equals(MasterRoutingAgent.GET_CAPACITIY_REQUSET_ONTOLOGY)) {
+
+                    } else if (msg.getOntology().equals(MasterRoutingAgent.GET_CAPACITY_REQUEST_ONTOLOGY)) {
                         ACLMessage response = new ACLMessage(ACLMessage.INFORM);
                         response.setOntology(MasterRoutingAgent.GET_CAPACITY_RESPONSE_ONTOLOGY);
                         response.setContent( msg.getContent()+","+_capacity);
@@ -67,7 +61,7 @@ public class DeliveryAgent extends Agent
     }
 
     // When this method is called, the delivery agent moves towards its next destination by deltaTime (if it has one)
-    public void FollowRoute() {
+    private void followRoute() {
         if (_route.size() == 0 || _body == null) {
             return;
         }
@@ -77,8 +71,6 @@ public class DeliveryAgent extends Agent
         for (int i = 0; i < _route.size(); i++) {
             Node thisNode = _route.get(i);
             Node nextNode = _route.size() == i + 1 ? _route.get(0) : _route.get(i + 1);
-
-            //TODO -- Update delivery agent's current position node
 
             double xTransition = nextNode.getX() - thisNode.getX();
             double yTransition = nextNode.getY() - thisNode.getY();
@@ -92,14 +84,11 @@ public class DeliveryAgent extends Agent
 
             transitions.add(transition);
         }
-        synchronized (DeliveryAgent.class) {
-            SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[transitions.size()]));
-            sequentialTransition.onFinishedProperty().set(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent actionEvent) {
-                    _isTraveling = false;
-                }
-            });
+
+        // SequentialTransitions must be created one at a time
+        synchronized (SequentialTransition.class) {
+            SequentialTransition sequentialTransition = new SequentialTransition(transitions.toArray(new TranslateTransition[0]));
+            sequentialTransition.onFinishedProperty().set(actionEvent -> _isTraveling = false);
             sequentialTransition.play();
         }
     }

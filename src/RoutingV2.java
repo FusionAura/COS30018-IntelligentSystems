@@ -46,7 +46,7 @@ public class RoutingV2 {
         public boolean reverse;
 
         public SearchVar(DataModel pData) {
-            GetDistanceMedian(pData);
+            getDistanceMedian(pData);
             negativeDomain = .1;
             positiveDomain = .5;
             negativeMulti = .5;
@@ -55,7 +55,7 @@ public class RoutingV2 {
         }
 
 
-        public void GetDistanceMedian(DataModel pData) {
+        public void getDistanceMedian(DataModel pData) {
             double temp = 0;
             for (int i = 0; i < pData.getDistanceMatrixSize(); i++) {
                 temp += pData.getDistance(0, i);
@@ -64,8 +64,11 @@ public class RoutingV2 {
         }
     }
 
+    public RoutingV2() {
+    }
+
     //Neighbouring Location identifier
-    public static List<Integer> NearbyDomain(double pRange, DataModel pData, List<Integer> pDomain, Integer pLoc) {
+    private List<Integer> nearbyDomain(double pRange, DataModel pData, List<Integer> pDomain, Integer pLoc) {
         List<Integer> nearbyDomain = new ArrayList<>();
         for (int i = 0; i < pDomain.size(); i++) {
             if (pData.getDistance(pLoc, pDomain.get(i)) < pRange) {
@@ -76,22 +79,25 @@ public class RoutingV2 {
     }
 
     //apply pVar to passed in test domain
-    public static List<Integer> BestNext(List<Integer> pLoc, List<Integer> pDomain, DataModel pData, List<Agent> pAgents, SearchVar pSearchVar) {
+    private List<Integer> bestNext(List<Integer> pLoc, List<Integer> pDomain, DataModel pData, List<Agent> pAgents, SearchVar pSearchVar) {
         List<Integer> bestLocs = new ArrayList<>();
         List<Double> bestCosts = new ArrayList<>();
         //clear these 2 lists to be searched again when 1 location is selected
         bestLocs.clear();
         bestCosts.clear();
+
         //vehicleNum instead of 3 later
         for (int i = 0; i < pAgents.size(); i++) {
             //what needs to be found == returnLocs == null
             //vehicle index i == null. search for it
-            int bestJ = 999999999;
-            double bestCost = 999999999;
+            Integer bestJ = null;
+            double bestCost = Double.POSITIVE_INFINITY;
+
             //get the lowest cost path form the last entry to currentRoute (current location)
             //Weight constraint check to refine our domain space to pick
             List<Integer> domain = new ArrayList<>();
             domain.addAll(pDomain);
+
             //use pDomain to cycle through and cut domain to avoid altering .size() causing errors
             for (int d = 0; d < pDomain.size(); d++) {
                 //parcel weight in the domain > vehicle capacity
@@ -100,6 +106,7 @@ public class RoutingV2 {
                     domain.remove(pDomain.get(d));
                 }
             }
+
             for (int j = 0; j < domain.size(); j++) {
                 //current loc of any driver should not be in pDomain as it is visited, besides 0
                 double current = pData.getDistance(pLoc.get(i), domain.get(j));
@@ -119,14 +126,13 @@ public class RoutingV2 {
                 if (pAgents.get(i).positiveDomain.contains(domain.get(j))) {
                     current -= pSearchVar.positiveMulti * pSearchVar.distanceMean;
                 }
-                if (bestJ == 999999999) {
-                    bestJ = domain.get(j);
-                    bestCost = current;
-                } else if (current < bestCost) {
+                if (current < bestCost) {
                     bestJ = domain.get(j);
                     bestCost = current;
                 }
             }
+
+
             //add i index bestJ and Cost as there wont always have 3 sizes to match index to vehicle numbers otherwise
             bestLocs.add(i, bestJ);
             bestCosts.add(i, bestCost);
@@ -134,7 +140,7 @@ public class RoutingV2 {
         return bestLocs;
     }
 
-    public static void WeightConstraints(DataModel pData, List<Agent> pAgents, List<Integer> pDomain, SearchVar pSearchVar) {
+    private void weightConstraints(DataModel pData, List<Agent> pAgents, List<Integer> pDomain, SearchVar pSearchVar) {
         //this method is used to avoid running into not a final heavy parcel that no vehicle can manage.
         /*
         add parcels into agent's PositiveDomain to incentivise visiting those locations
@@ -143,36 +149,36 @@ public class RoutingV2 {
         for (Agent agent : pAgents) {
             List<Integer> priority = new ArrayList<>();
             agent.positiveDomain.clear();
+
             for (int i = 0; i < pDomain.size(); i++) {
                 if ((pData.getParcelWeight(pDomain.get(i)) * 3) >= agent.load) {
                     priority.add(pDomain.get(i));
                 }
             }
+
             //if priority list>0 search that they are close add to positive Domain of agent
-            if (priority.size() > 0)
-                agent.positiveDomain.addAll(NearbyDomain(pSearchVar.positiveDomain * pSearchVar.distanceMean, pData, priority, agent.route.get(agent.route.size() - 1)));
+            if (priority.size() > 0) {
+                agent.positiveDomain.addAll(nearbyDomain(pSearchVar.positiveDomain * pSearchVar.distanceMean, pData, priority, agent.route.get(agent.route.size() - 1)));
+            }
         }
     }
 
-    public static void PickBestNext(List<Integer> pPaths, DataModel pData, List<Agent> pAgents) {
-        int best = 999999999;
-        double cost = 0;
+    private void pickBestNext(List<Integer> pPaths, DataModel pData, List<Agent> pAgents) {
+        Integer best = null;
+        double cost = Double.POSITIVE_INFINITY;
+
         //pick the best next path that is the shortest distances, ignoring first locations which has all agents the same as we doa  different search for initial starting locations
         for (int i = 0; i < pPaths.size(); i++) {
             //99999999 is the default pPaths value of a path that has no possible outcomes from BestNext();
-            if (pPaths.get(i) != 999999999)
-            {
-                if (best == 999999999)
-                {
-                    best = i;
-                    cost = pData.getDistance(pAgents.get(i).route.get(pAgents.get(i).route.size() - 1), pPaths.get(i));
-                } else if (pData.getDistance(pAgents.get(i).route.get(pAgents.get(i).route.size() - 1), pPaths.get(i)) < cost) {
+            if (pPaths.get(i) != null) {
+                if (pData.getDistance(pAgents.get(i).route.get(pAgents.get(i).route.size() - 1), pPaths.get(i)) < cost) {
                     best = i;
                     cost = pData.getDistance(pAgents.get(i).route.get(pAgents.get(i).route.size() - 1), pPaths.get(i));
                 }
             }
         }
-        if (best != 999999999) {
+
+        if (best != null) {
             //apply the best index route add routeCost first as it uses last route.
             pAgents.get(best).routeCost += pData.getDistance(pAgents.get(best).route.get(pAgents.get(best).route.size() - 1), pPaths.get(best));
             pAgents.get(best).route.add(pPaths.get(best));
@@ -183,7 +189,7 @@ public class RoutingV2 {
     }
 
     //refactoring code into method splits for DFS searching thus param missing p Casing for this method only
-    public static List<Agent> SearchRoutes(DataModel data, SearchVar searchVar)
+    private List<Agent> searchRoutes(DataModel data, SearchVar searchVar)
     {
         //initialize RouteManager List wiht 3 new Routes, add depot as first route location
         List<Agent> agentManager = new ArrayList<>();
@@ -191,51 +197,51 @@ public class RoutingV2 {
             Agent temp = new Agent(i, data.getDepot(), data.getVehicleCapacity(i));
             agentManager.add(temp);
         }
+
         //get demanding deliveries
         while (data.getDemands().contains(1)) {
             List<Integer> currentLoc = new ArrayList<>();
             List<Integer> domain = new ArrayList<>();
+
             for (int i = 0; i < data.getDemands().size(); i++) {
                 if (data.getDemands().get(i) == 1) {
                     domain.add(i);
                 }
             }
+
             //populate PositiveDomain when weight becomes scarce
-            WeightConstraints(data, agentManager, domain, searchVar);
+            weightConstraints(data, agentManager, domain, searchVar);
             for (int i = 0; i < agentManager.size(); i++) {
                 //saves repeating this line in searches
                 currentLoc.add(agentManager.get(i).route.get(agentManager.get(i).route.size() - 1));
                 //clear and re define negativeDomains for each agent
                 agentManager.get(i).negativeDomain.clear();
-                agentManager.get(i).negativeDomain.addAll(NearbyDomain(searchVar.negativeDomain * searchVar.distanceMean, data, domain, agentManager.get(i).route.get(agentManager.get(i).route.size() - 1)));
+                agentManager.get(i).negativeDomain.addAll(nearbyDomain(searchVar.negativeDomain * searchVar.distanceMean, data, domain, agentManager.get(i).route.get(agentManager.get(i).route.size() - 1)));
             }
-            List<Integer> test = BestNext(currentLoc, domain, data, agentManager, searchVar);
+
+            List<Integer> test = bestNext(currentLoc, domain, data, agentManager, searchVar);
             //this is a checker to break out of our search loop with an incomplete set of Routes as vehicle Load can not handle the left over parcels by themselves.
             int failedsearch = 0;
-            for(Integer i : test)
-            {
-                if(i == 999999999)
-                {
+            for (Integer i : test) {
+                if(i == null) {
                     failedsearch++;
                 }
             }
-            if (failedsearch == test.size())
-            {
+
+            if (failedsearch == test.size()) {
                 break;
             }
-            PickBestNext(test, data, agentManager);
+            pickBestNext(test, data, agentManager);
         }
         //add the final destination + cost back to warehouse
         for (int i = 0; i < agentManager.size(); i++) {
-
-            UpdateAgents(agentManager, i, 0, data);
+            updateAgents(agentManager, i, 0, data);
             //System.out.println("return AgentManager:"+agentManager.get(i).route);
         }
         return agentManager;
     }
 
-    public static void EvaluateSearch(List<Agent> pAgents, SearchVar pSearchVar, DataModel pData)
-    {
+    private void evaluateSearch(List<Agent> pAgents, SearchVar pSearchVar, DataModel pData) {
         //do some evaluation of the search results and alter psearchVar for stricter weight/no nearby vehicles.
         /*
         Lots of free space/load on vehicles reduce priority on heavy parcels
@@ -243,63 +249,49 @@ public class RoutingV2 {
         for higher accuracy.
          */
         //search only fails when left over locations weight > individual vehicle's load but not load total
-        if (pData.getDemands().contains(1))
-        {
-            if (pSearchVar.positiveMulti < 2)
-            {
+        if (pData.getDemands().contains(1)) {
+            if (pSearchVar.positiveMulti < 2) {
                 pSearchVar.positiveMulti += .1;
-            }
-            else if(pSearchVar.positiveMulti >= 2)
-            {
-                if(pSearchVar.positiveDomain <= 2.5)
-                {
+            } else if (pSearchVar.positiveMulti >= 2) {
+                if (pSearchVar.positiveDomain <= 2.5) {
                     pSearchVar.positiveDomain += .1;
                     //reset positiveMulti to cycle searches again with increased range
                     pSearchVar.positiveMulti = .1;
                 }
             }
-        }
+
         //completed search play with changes to spread of vehicles
-        else if(!pData.getDemands().contains(1))
-        {
+        } else if(!pData.getDemands().contains(1)) {
             //reset positiveMulti/Domain
             pSearchVar.positiveDomain = .5;
             pSearchVar.positiveMulti = .3;
             //search by increasing deterrence and incentive values first
-            if (!pSearchVar.reverse)
-            {
-                if (pSearchVar.negativeMulti < 5)
-                {
+            if (!pSearchVar.reverse) {
+
+                if (pSearchVar.negativeMulti < 5) {
                     pSearchVar.negativeMulti += .25;
-                }
-                else if (pSearchVar.negativeMulti >=5)
-                {
-                    if(pSearchVar.negativeDomain <= 2.5)
-                    {
+                } else if (pSearchVar.negativeMulti >= 5) {
+
+                    if (pSearchVar.negativeDomain <= 2.5) {
                         pSearchVar.negativeDomain += .1;
                         //reset negativeMulti
                         pSearchVar.negativeMulti = .5;
                     }
                 }
-                if(pSearchVar.negativeMulti >= 5 && pSearchVar.negativeDomain>=2.5)
-                {
+
+                if (pSearchVar.negativeMulti >= 5 && pSearchVar.negativeDomain >= 2.5) {
                     //reverse search and reset the values
                     pSearchVar.reverse = true;
                     pSearchVar.negativeMulti = .5;
                     pSearchVar.negativeDomain = .1;
                 }
-            }
+
             //search going from increasing Radius first
-            else if(pSearchVar.reverse)
-            {
-                if (pSearchVar.negativeDomain < 2.5)
-                {
+            } else if(pSearchVar.reverse) {
+                if (pSearchVar.negativeDomain < 2.5) {
                     pSearchVar.negativeDomain += .1;
-                }
-                else if (pSearchVar.negativeDomain >=2.5)
-                {
-                    if(pSearchVar.negativeMulti <= 5)
-                    {
+                } else if (pSearchVar.negativeDomain >=2.5) {
+                    if (pSearchVar.negativeMulti <= 5) {
                         pSearchVar.negativeMulti += .25;
                         pSearchVar.negativeDomain = .1;
                     }
@@ -309,47 +301,42 @@ public class RoutingV2 {
 
     }
 
-    public static List<List<Integer>> VehicleRouting(DataModel pData) {
-        DataModel data = pData;
+    public List<List<Integer>> vehicleRouting(DataModel data) {
         SearchVar searchVar = new SearchVar(data);
         List<List<Agent>> allAgents = new ArrayList<>();
-        while(allAgents.size() < 250)
-        {
-            List<Agent> agentManager = SearchRoutes(data, searchVar);
+        while(allAgents.size() < 250) {
+            List<Agent> agentManager = searchRoutes(data, searchVar);
             //evaluate search variables alter searchVar
-            EvaluateSearch(agentManager,searchVar, data);
+            evaluateSearch(agentManager,searchVar, data);
+
             //successful search
-            if(!data.getDemands().contains(1))
-            {
+            if(!data.getDemands().contains(1)) {
                 allAgents.add(agentManager);
             }
+
             //reset dataModel for data.demands
             data.resetDemands();
         }
-        double bestAverage = 999999999;
-        Integer bestIndex = 999999999;
+
+
+        Integer bestIndex = null;
+        double bestAverage = Double.POSITIVE_INFINITY;
         for (int i = 0; i < allAgents.size(); i++) {
             double average = 0;
-            for (int j = 0; j < allAgents.get(i).size();j++)
-            {
+
+            for (int j = 0; j < allAgents.get(i).size();j++) {
                 average += allAgents.get(i).get(j).routeCost;
             }
-            if (bestIndex==999999999)
-            {
-                bestIndex = i;
-                bestAverage = average/allAgents.get(i).size();
-            }
-            else if(average/allAgents.get(i).size() < bestAverage)
-            {
+
+            if(average/allAgents.get(i).size() < bestAverage) {
                 bestAverage = average/allAgents.get(i).size();
                 bestIndex = i;
             }
         }
+
         List<List<Integer>> routes = new ArrayList<>();
-        if (bestIndex != 999999999)
-        {
-            for (int i =0; i < allAgents.get(bestIndex).size();i++)
-            {
+        if (bestIndex != null) {
+            for (int i =0; i < allAgents.get(bestIndex).size();i++) {
                 routes.add(allAgents.get(bestIndex).get(i).route);
             }
         }
@@ -357,7 +344,7 @@ public class RoutingV2 {
     }
 
     //adds routeCost from last to new loc, add route(pNewLoc)
-    public static void UpdateAgents(List<Agent> pRM, Integer pI, Integer pNewLoc, DataModel pData) {
+    private void updateAgents(List<Agent> pRM, Integer pI, Integer pNewLoc, DataModel pData) {
         //update routeCost from current last routeindex to pNewLoc
         int temp = pRM.get(pI).route.size() - 1;
         pRM.get(pI).routeCost += pData.getDistance(temp, pNewLoc);
@@ -394,7 +381,9 @@ public class RoutingV2 {
                 0,
                 Arrays.asList(0,75,50,20,40,15,5,25,42,22,48,18,32,15,55,40,42)
         );
-        List<List<Integer>> routes = VehicleRouting(data);
+
+        RoutingV2 routingV2 = new RoutingV2();
+        List<List<Integer>> routes = routingV2.vehicleRouting(data);
         for (int i = 0; i < routes.size(); i++) {
             System.out.println("Results:"+i+routes.get(i));
         }
