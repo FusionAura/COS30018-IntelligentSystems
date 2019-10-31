@@ -96,7 +96,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     private void sendRoutes() throws IOException {
         // Setup data model
         List<AID> deliveryAgents = getDeliveryAgents();
-        Routing VRPRoute = new Routing();
+        RoutingV2 VRPRoute = new RoutingV2();
         getCapacity(deliveryAgents);
 
         List<Integer> demands = new ArrayList<>();
@@ -125,7 +125,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         );
 
         //Create the routes
-        List<List<Integer>> routes = RoutingV2.VehicleRouting(dataModel);
+        List<List<Integer>> routes = VRPRoute.VehicleRouting(dataModel);
 
         for (int i = 0; i < deliveryAgents.size(); i++) {
             List<Node> route = new ArrayList<Node>();
