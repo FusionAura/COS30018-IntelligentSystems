@@ -189,7 +189,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
                     .findFirst();
             if (destination.isPresent()) {
                int index = _allNodes.indexOf(destination.get());
-                demands.add(index, 1);
+                demands.set(index, 1);
                 parcelWeight.add(index, parcel.getWeight());
             }
         }
