@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -41,11 +40,11 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
                             _responses++;
                             // id,capacity
                             String[] response = msg.getContent().split(",");
-                            _vehicleCapacity.add(Integer.parseInt(response[0]), Integer.valueOf(response[1]));
+                            _vehicleCapacity.set(Integer.parseInt(response[0]), Integer.valueOf(response[1]));
                         }
                     }
                 }
-                block();
+                //block();
             }
         };
         addBehaviour(msgListenBehaviour);
@@ -67,11 +66,15 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         }
         List<AID> deliveryAgents = new ArrayList<>();
 
-        AID myID = getAID(); //This method to get the identity of //agents such as (Name , adress , host ....etc)
+        AID myID = getAID(); //This method to get the identity of //agents such as (Name , address , host ....etc)
         for (AMSAgentDescription agent : agents) {
             AID agentID = agent.getName();
-            if (!agentID.equals(myID)) {
+            //if (!agentID.equals(myID) && !agentID.equals("ams@10.0.0.132:8888/JADE") && !agentID.equals("MasterRoutingAgent@10.0.0.132:8888/JADE")&& !agentID.equals("df@10.0.0.132:8888/JADE"))
+            //{
+            if (agentID.getName().matches("^d\\d+@.*$"))
+            {
                 deliveryAgents.add(agentID);
+                System.out.println(deliveryAgents.size());
             }
         }
 
@@ -96,20 +99,23 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         Routing VRPRoute = new Routing();
         getCapacity(deliveryAgents);
 
-        List<Integer> demands = new ArrayList<>(_distanceMatrix.size());
+        List<Integer> demands = new ArrayList<>();
+        _distanceMatrix.forEach(doubles -> demands.add(0));
+
         List<Integer> parcelWeight = new ArrayList<>();
+        _distanceMatrix.forEach(distance -> parcelWeight.add(0));
         for (Parcel parcel : _allParcel) {
             Optional<Node> destination = _allNodes.stream()
                     .filter(node -> node.amI(parcel.getDestination()))
                     .findFirst();
             if (destination.isPresent()) {
                 int index = _allNodes.indexOf(destination.get());
-                demands.add(index, 1);
-                parcelWeight.add(parcel.getWeight());
+                demands.set(index, 1);
+                parcelWeight.set(index, parcel.getWeight());
             }
         }
 
-        Routing.DataModel dataModel = new Routing.DataModel(
+        DataModel dataModel = new DataModel(
                 _distanceMatrix,
                 deliveryAgents.size(),
                 demands,
@@ -119,7 +125,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
         );
 
         //Create the routes
-        List<Routing.Routes> routes = VRPRoute.VRP(dataModel);
+        List<List<Integer>> routes = RoutingV2.VehicleRouting(dataModel);
 
         for (int i = 0; i < deliveryAgents.size(); i++) {
             List<Node> route = new ArrayList<Node>();
@@ -127,7 +133,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             AID agent = deliveryAgents.get(i);
 
             // Convert the indexs into nodes that we can follow
-            for (int nodePos : routes.get(i).route) {
+            for (int nodePos : routes.get(i)) {
                 route.add(_allNodes.get(nodePos));
             }
 
@@ -204,13 +210,14 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
     // Sends a request to each given agent and waits until all agents respond
     // This assumes that all agents will respond
     private void getCapacity(List<AID> deliveryAgents) {
-        for (AID agent : deliveryAgents) {
+        _vehicleCapacity.clear();
+        for (int i = 0; i < deliveryAgents.size(); i++) {
+            _vehicleCapacity.add(0);
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             msg.setLanguage("English");
-
             msg.setOntology(GET_CAPACITY_REQUEST_ONTOLOGY);
-            msg.addReceiver(agent);
-
+            msg.addReceiver(deliveryAgents.get(i));
+            msg.setContent(String.valueOf(i));
             send(msg);
         }
 

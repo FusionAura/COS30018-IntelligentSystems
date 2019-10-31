@@ -17,6 +17,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.scene.shape.*;
 import javafx.scene.layout.*;
+import javafx.scene.Scene;
 
 public class GUIController implements Initializable {
     //List View variables.
