@@ -289,11 +289,8 @@ public class GUIController implements Initializable {
     {
         for(Circle c : _circleReference.keySet())
         {
-            System.out.println(_circleReference.get(c).getText());
-            System.out.println(reference);
             if(_circleReference.get(c).getText().equals(reference))
             {
-                System.out.println("found");
                 mapPane.getChildren().remove(c);
             }
         }

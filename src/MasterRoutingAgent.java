@@ -85,7 +85,6 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             if (agentID.getName().matches("^d\\d+@.*$"))
             {
                 deliveryAgents.add(agentID);
-                System.out.println(deliveryAgents.size());
             }
         }
 
@@ -161,7 +160,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             msg.setOntology(GET_CAPACITIY_REQUSET_ONTOLOGY);
             msg.addReceiver(new AID(deliveryAgents.get(i).toString(), AID.ISLOCALNAME));
             msg.setContent(String.valueOf(i));
-            System.out.print(msg);
+            //System.out.print(msg);
             send(msg);
         }
 
@@ -191,8 +190,13 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
             if (destination.isPresent()) {
                int index = _allNodes.indexOf(destination.get());
                 demands.set(index, 1);
-                parcelWeight.add(index, parcel.getWeight());
+                parcelWeight.set(index, (parcelWeight.get(index)+parcel.getWeight()));
             }
+        }
+
+        for(Integer i : parcelWeight)
+        {
+            System.out.println(i);
         }
 
         DataModel dataModel = new DataModel(
