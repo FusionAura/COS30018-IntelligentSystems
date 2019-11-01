@@ -44,7 +44,7 @@ public class MasterRoutingAgent extends Agent implements MasterRoutingAgentInter
                             _responses++;
                             // id,capacity
                             String[] response = msg.getContent().split(",");
-                            _vehicleCapacity.add(Integer.parseInt(response[0]), Integer.valueOf(response[1]));
+                            _vehicleCapacity.set(Integer.parseInt(response[0]), Integer.valueOf(response[1]));
                         }
                     }
                 }

@@ -48,7 +48,7 @@ public class RoutingV2 {
         public SearchVar(DataModel pData) {
             GetDistanceMedian(pData);
             negativeDomain = .1;
-            positiveDomain = .5;
+            positiveDomain = .25;
             negativeMulti = .5;
             positiveMulti = .2;
             reverse = false;
@@ -110,7 +110,7 @@ public class RoutingV2 {
                         if (pAgents.get(n).negativeDomain.contains(domain.get(j))) {
                             //Formula used 1 - nearbyVehicleDistanceToLoc / DistanceMean gets our % that is high when distance is close for deterrence and low when its further for encouraging incentive
                             double nearbyVehicleDistance = pData.getDistance(pLoc.get(n), domain.get(j));
-                            double nearbyVehicleMulti = 1 - (nearbyVehicleDistance/pSearchVar.distanceMean);
+                            double nearbyVehicleMulti = Math.abs(1 - (nearbyVehicleDistance/pSearchVar.distanceMean));
                             current += pSearchVar.negativeMulti * pSearchVar.distanceMean *nearbyVehicleMulti;
                         }
                     }
@@ -245,25 +245,29 @@ public class RoutingV2 {
         //search only fails when left over locations weight > individual vehicle's load but not load total
         if (pData.getDemands().contains(1))
         {
-            if (pSearchVar.positiveMulti < 2)
+            if (pSearchVar.positiveMulti < 7)
             {
-                pSearchVar.positiveMulti += .1;
+                pSearchVar.positiveMulti += .25;
             }
-            else if(pSearchVar.positiveMulti >= 2)
+            else if(pSearchVar.positiveMulti >= 7)
             {
-                if(pSearchVar.positiveDomain <= 2.5)
+                if(pSearchVar.positiveDomain <= 7)
                 {
-                    pSearchVar.positiveDomain += .1;
+                    pSearchVar.positiveDomain += 0.25;
                     //reset positiveMulti to cycle searches again with increased range
-                    pSearchVar.positiveMulti = .1;
+                    pSearchVar.positiveMulti = 0.2;
                 }
+            }
+            if(pSearchVar.positiveMulti>=7&&pSearchVar.positiveDomain>=7)
+            {
+                System.out.println("Weight issue");
             }
         }
         //completed search play with changes to spread of vehicles
         else if(!pData.getDemands().contains(1))
         {
             //reset positiveMulti/Domain
-            pSearchVar.positiveDomain = .5;
+            pSearchVar.positiveDomain = .2;
             pSearchVar.positiveMulti = .3;
             //search by increasing deterrence and incentive values first
             if (!pSearchVar.reverse)
@@ -313,8 +317,10 @@ public class RoutingV2 {
         DataModel data = pData;
         SearchVar searchVar = new SearchVar(data);
         List<List<Agent>> allAgents = new ArrayList<>();
-        while(allAgents.size() < 250)
+        Integer loopBreak = 0;
+        while(allAgents.size() < 974)
         {
+            loopBreak++;
             List<Agent> agentManager = SearchRoutes(data, searchVar);
             //evaluate search variables alter searchVar
             EvaluateSearch(agentManager,searchVar, data);
@@ -325,6 +331,10 @@ public class RoutingV2 {
             }
             //reset dataModel for data.demands
             data.resetDemands();
+            if(loopBreak>100000)
+            {
+                break;
+            }
         }
         double bestAverage = 999999999;
         Integer bestIndex = 999999999;
